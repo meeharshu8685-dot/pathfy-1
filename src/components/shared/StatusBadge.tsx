@@ -1,3 +1,4 @@
+import * as React from "react";
 import { cn } from "@/lib/utils";
 
 type Status = "realistic" | "warning" | "risky" | "unrealistic" | "locked" | "unlocked" | "completed";
@@ -38,18 +39,23 @@ const statusConfig: Record<Status, { label: string; className: string }> = {
   },
 };
 
-export function StatusBadge({ status, className }: StatusBadgeProps) {
-  const config = statusConfig[status];
+export const StatusBadge = React.forwardRef<HTMLSpanElement, StatusBadgeProps>(
+  ({ status, className }, ref) => {
+    const config = statusConfig[status];
 
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border",
-        config.className,
-        className
-      )}
-    >
-      {config.label}
-    </span>
-  );
-}
+    return (
+      <span
+        ref={ref}
+        className={cn(
+          "inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border transition-colors",
+          config.className,
+          className
+        )}
+      >
+        {config.label}
+      </span>
+    );
+  }
+);
+
+StatusBadge.displayName = "StatusBadge";
