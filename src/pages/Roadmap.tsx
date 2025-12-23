@@ -79,7 +79,7 @@ export default function Roadmap() {
     if (!currentGoal) {
       toast({
         title: "No Goal Found",
-        description: "Please complete the Reality Check first",
+        description: "Please complete the Path Feasibility first",
         variant: "destructive",
       });
       return;
@@ -186,7 +186,7 @@ export default function Roadmap() {
                     <div>
                       <h2 className="text-xl font-semibold mb-2">Ready to Build Your Roadmap</h2>
                       <p className="text-muted-foreground text-sm">
-                        Based on your Reality Check and goal analysis, we'll create a personalized 
+                        Based on your Path Feasibility and goal analysis, we'll create a personalized 
                         phase-by-phase learning path.
                       </p>
                     </div>
@@ -223,10 +223,10 @@ export default function Roadmap() {
                 ) : (
                   <div className="text-center py-8">
                     <p className="text-muted-foreground mb-4">
-                      No approved goal found. Complete the Reality Check first.
+                      No approved goal found. Complete the Path Feasibility first.
                     </p>
                     <Button variant="outline" onClick={() => navigate("/reality-check")}>
-                      Start Reality Check
+                      Start Path Feasibility
                     </Button>
                   </div>
                 )}

@@ -94,7 +94,7 @@ export default function Dashboard() {
               <Link to="/reality-check">
                 <Button variant="hero">
                   <Target className="w-4 h-4 mr-2" />
-                  Start Reality Check
+                  Start Path Feasibility
                 </Button>
               </Link>
             </div>
@@ -234,7 +234,7 @@ export default function Dashboard() {
                   <Link to="/reality-check">
                     <Button variant="ghost" className="w-full justify-start">
                       <Target className="w-4 h-4 mr-2" />
-                      Reality Check
+                      Path Feasibility
                       <span className="ml-auto text-xs text-muted-foreground">1 token</span>
                     </Button>
                   </Link>

@@ -48,7 +48,7 @@ export default function Login() {
                 <Zap className="w-5 h-5 text-white" />
               </div>
               <span className="text-lg font-semibold text-foreground">
-                ExecuteAI
+                Pathly
               </span>
             </Link>
             <Link 

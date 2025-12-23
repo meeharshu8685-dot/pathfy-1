@@ -32,7 +32,7 @@ export function RoadmapPrerequisiteCheck({
             Complete These Steps First
           </h3>
           <p className="text-sm text-muted-foreground mb-4">
-            The Roadmap Generator creates a personalized learning path based on your Reality Check and Goal Decomposition results.
+            The Roadmap Generator creates a personalized learning path based on your Path Feasibility and Goal Decomposition results.
             {goalTitle && ` We'll build a roadmap for: "${goalTitle}"`}
           </p>
 
@@ -44,7 +44,7 @@ export function RoadmapPrerequisiteCheck({
                 <div className="w-5 h-5 rounded-full border-2 border-muted-foreground" />
               )}
               <span className={hasCompletedRealityCheck ? "text-success" : "text-foreground"}>
-                Reality Check
+                Path Feasibility
               </span>
               {!hasCompletedRealityCheck && (
                 <Button

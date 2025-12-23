@@ -11,7 +11,7 @@ export function Footer() {
               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
                 <Zap className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold">ExecuteAI</span>
+              <span className="text-xl font-bold">Pathly</span>
             </Link>
             <p className="text-sm text-muted-foreground">
               Convert goals into realistic, dependency-aware execution systems.
@@ -21,7 +21,7 @@ export function Footer() {
           <div>
             <h4 className="font-semibold mb-4">Features</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/reality-check" className="hover:text-primary transition-colors">Reality Check</Link></li>
+              <li><Link to="/reality-check" className="hover:text-primary transition-colors">Path Feasibility</Link></li>
               <li><Link to="/problem-decomposer" className="hover:text-primary transition-colors">Problem Decomposer</Link></li>
               <li><Link to="/roadmap" className="hover:text-primary transition-colors">Roadmap Builder</Link></li>
               <li><Link to="/study-optimizer" className="hover:text-primary transition-colors">Study Optimizer</Link></li>
@@ -47,7 +47,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} ExecuteAI. Built for execution, not excuses.
+          © {new Date().getFullYear()} Pathly. Built for execution, not excuses.
         </div>
       </div>
     </footer>

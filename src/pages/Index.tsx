@@ -16,7 +16,7 @@ import {
 const features = [
   {
     icon: <Target className="w-6 h-6" />,
-    title: "Reality Check",
+    title: "Path Feasibility",
     description: "Validate if your goal is actually achievable given your constraints. No more wishful thinking.",
     href: "/reality-check",
     tokenCost: 1,
@@ -91,7 +91,7 @@ export default function Index() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/reality-check">
                 <Button variant="hero" size="xl">
-                  Check Your Reality
+                  Check Your Path
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>

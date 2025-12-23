@@ -41,7 +41,7 @@ export default function Signup() {
     }
 
     toast({
-      title: "Welcome to ExecuteAI!",
+      title: "Welcome to Pathly!",
       description: "Your account has been created. You've received 5 free tokens.",
     });
     navigate("/dashboard");
@@ -59,7 +59,7 @@ export default function Signup() {
                 <Zap className="w-5 h-5 text-white" />
               </div>
               <span className="text-lg font-semibold text-foreground">
-                ExecuteAI
+                Pathly
               </span>
             </Link>
             <Link 
