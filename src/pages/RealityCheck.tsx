@@ -279,21 +279,21 @@ export default function RealityCheck() {
 
   return (
     <Layout>
-      <div className="container max-w-3xl py-8 space-y-8">
+      <div className="container max-w-3xl px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
         {/* Header */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
-            <Target className="h-4 w-4" />
+        <div className="text-center space-y-3 animate-fade-in">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium">
+            <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             Path Feasibility
           </div>
-          <h1 className="text-3xl font-bold">Achievement Planner</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold font-display">Achievement Planner</h1>
+          <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
             Get an honest, data-driven analysis of your career goals
           </p>
           {user && (
-            <div className="flex items-center justify-center gap-4 mt-4">
-              <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-                <Coins className="w-4 h-4" />
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mt-4">
+              <div className="inline-flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                <Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Your tokens: {tokens}
               </div>
               <TokenDisplay tokens={TOKEN_COST} size="sm" />
@@ -303,25 +303,25 @@ export default function RealityCheck() {
 
         {/* Step: Input Form */}
         {step === "input" && (
-          <Card className="border-border/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" />
+          <Card className="border-border/50 animate-slide-up" variant="glass">
+            <CardHeader className="pb-4 sm:pb-6">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-2xl">
+                <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                 Define Your Goal
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-xs sm:text-sm">
                 Tell us about your career goal and we'll analyze its feasibility
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-5 sm:space-y-6">
               {/* Field Selection - First */}
               <div className="space-y-2">
-                <Label>Field</Label>
+                <Label className="text-sm font-medium">Field</Label>
                 <Select value={field} onValueChange={handleFieldChange}>
-                  <SelectTrigger className="bg-background">
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-popover border border-border z-50">
+                  <SelectContent>
                     {FIELDS.map((f) => (
                       <SelectItem key={f.value} value={f.value}>
                         {f.label}
@@ -332,16 +332,16 @@ export default function RealityCheck() {
               </div>
 
               {/* Goal Input - Two Sections */}
-              <div className="space-y-4">
-                <Label>Target Goal or Position</Label>
+              <div className="space-y-3 sm:space-y-4">
+                <Label className="text-sm font-medium">Target Goal or Position</Label>
                 
                 {/* Toggle between modes */}
-                <div className="flex gap-2 p-1 rounded-lg bg-secondary/50">
+                <div className="flex gap-1.5 sm:gap-2 p-1 rounded-xl bg-secondary/50">
                   <Button
                     type="button"
                     variant={goalInputMode === "select" ? "default" : "ghost"}
                     size="sm"
-                    className="flex-1"
+                    className="flex-1 text-xs sm:text-sm h-9 sm:h-10"
                     onClick={() => setGoalInputMode("select")}
                   >
                     Choose from list
@@ -350,7 +350,7 @@ export default function RealityCheck() {
                     type="button"
                     variant={goalInputMode === "manual" ? "default" : "ghost"}
                     size="sm"
-                    className="flex-1"
+                    className="flex-1 text-xs sm:text-sm h-9 sm:h-10"
                     onClick={() => setGoalInputMode("manual")}
                   >
                     Write manually
@@ -362,10 +362,10 @@ export default function RealityCheck() {
                   <div className="space-y-2">
                     {FIELD_GOALS[field]?.length > 0 ? (
                       <Select value={selectedGoal} onValueChange={setSelectedGoal}>
-                        <SelectTrigger className="bg-background">
+                        <SelectTrigger>
                           <SelectValue placeholder="Select a goal/position..." />
                         </SelectTrigger>
-                        <SelectContent className="bg-popover border border-border z-50 max-h-[300px]">
+                        <SelectContent className="max-h-[280px] sm:max-h-[300px]">
                           {FIELD_GOALS[field].map((g) => (
                             <SelectItem key={g.value} value={g.value}>
                               {g.label}
@@ -374,8 +374,8 @@ export default function RealityCheck() {
                         </SelectContent>
                       </Select>
                     ) : (
-                      <div className="p-4 rounded-lg bg-secondary/50 border border-border text-center">
-                        <p className="text-sm text-muted-foreground">
+                      <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 border border-border text-center">
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                           No preset goals for this field. Please write your goal manually.
                         </p>
                         <Button
@@ -383,7 +383,7 @@ export default function RealityCheck() {
                           variant="link"
                           size="sm"
                           onClick={() => setGoalInputMode("manual")}
-                          className="mt-2"
+                          className="mt-2 text-xs sm:text-sm"
                         >
                           Switch to manual input
                         </Button>
@@ -396,22 +396,22 @@ export default function RealityCheck() {
                 {goalInputMode === "manual" && (
                   <Input
                     id="goal"
-                    placeholder="e.g., Become a Full-Stack Developer, Clear UPSC, Launch a startup..."
+                    placeholder="e.g., Become a Full-Stack Developer..."
                     value={goal}
                     onChange={(e) => setGoal(e.target.value)}
-                    className="text-base bg-background"
+                    className="text-sm sm:text-base"
                   />
                 )}
               </div>
 
               {/* Skill Level */}
               <div className="space-y-2">
-                <Label>Current Skill Level (Self-Assessment)</Label>
+                <Label className="text-sm font-medium">Current Skill Level (Self-Assessment)</Label>
                 <Select value={skillLevel} onValueChange={setSkillLevel}>
-                  <SelectTrigger className="bg-background">
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-popover border border-border z-50">
+                  <SelectContent>
                     {SKILL_LEVELS.map((s) => (
                       <SelectItem key={s.value} value={s.value}>
                         {s.label}
@@ -422,10 +422,10 @@ export default function RealityCheck() {
               </div>
 
               {/* Hours per Week */}
-              <div className="space-y-4">
-                <div className="flex justify-between">
-                  <Label>Available Hours per Week</Label>
-                  <span className="text-sm font-medium text-primary">{hoursPerWeek} hours</span>
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex justify-between items-center">
+                  <Label className="text-sm font-medium">Available Hours per Week</Label>
+                  <span className="text-sm sm:text-base font-semibold text-primary bg-primary/10 px-2.5 py-0.5 rounded-lg">{hoursPerWeek} hrs</span>
                 </div>
                 <Slider
                   value={[hoursPerWeek]}
@@ -443,18 +443,18 @@ export default function RealityCheck() {
 
               {/* Deadline */}
               <div className="space-y-2">
-                <Label>Target Timeline</Label>
-                <div className="flex flex-col sm:flex-row gap-3">
+                <Label className="text-sm font-medium">Target Timeline</Label>
+                <div className="grid grid-cols-2 gap-3">
                   <Input
                     type="number"
                     min={1}
                     max={deadlineUnit === "months" ? 36 : 52}
                     value={deadlineValue}
                     onChange={(e) => setDeadlineValue(parseInt(e.target.value) || 1)}
-                    className="w-full sm:w-28"
+                    className="text-center"
                   />
                   <Select value={deadlineUnit} onValueChange={(v: "weeks" | "months") => setDeadlineUnit(v)}>
-                    <SelectTrigger className="w-full sm:w-36">
+                    <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -463,16 +463,17 @@ export default function RealityCheck() {
                     </SelectContent>
                   </Select>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground text-center sm:text-left">
                   ≈ {deadlineWeeks} weeks total ({Math.round(hoursPerWeek * deadlineWeeks)} hours available)
                 </p>
               </div>
 
               {/* Action Buttons */}
-              <div className="space-y-3">
+              <div className="space-y-3 pt-2">
                 <Button 
                   onClick={handleStartQuiz} 
                   className="w-full" 
+                  variant="hero"
                   size="lg" 
                   disabled={goalInputMode === "select" ? !selectedGoal : !goal.trim()}
                 >
@@ -491,7 +492,7 @@ export default function RealityCheck() {
                 </Button>
               </div>
 
-              <p className="text-xs text-center text-muted-foreground">
+              <p className="text-xs text-center text-muted-foreground px-4">
                 The skill quiz helps calibrate your actual level for more accurate analysis
               </p>
             </CardContent>
@@ -505,12 +506,15 @@ export default function RealityCheck() {
 
         {/* Step: Analyzing */}
         {step === "analyzing" && (
-          <Card className="border-primary/20">
-            <CardContent className="py-16 text-center space-y-4">
-              <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-              <div>
-                <h3 className="text-lg font-semibold">Analyzing Your Goal</h3>
-                <p className="text-sm text-muted-foreground">
+          <Card className="border-primary/20 animate-scale-in" variant="glass">
+            <CardContent className="py-12 sm:py-16 text-center space-y-4">
+              <div className="relative w-16 h-16 mx-auto">
+                <Loader2 className="h-16 w-16 animate-spin text-primary" />
+                <div className="absolute inset-0 animate-pulse-glow rounded-full" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-base sm:text-lg font-semibold font-display">Analyzing Your Goal</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground px-4">
                   Calculating feasibility with conservative estimates...
                 </p>
               </div>
