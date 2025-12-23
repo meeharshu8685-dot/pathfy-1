@@ -18,6 +18,7 @@ import { AchievementPlan, AchievementPlanData } from "@/components/reality-check
 
 const FIELDS = [
   { value: "tech", label: "Technology & Software" },
+  { value: "medical", label: "Medical & Healthcare" },
   { value: "exams", label: "Competitive Exams" },
   { value: "business", label: "Business & Management" },
   { value: "sports", label: "Sports & Fitness" },
@@ -26,6 +27,82 @@ const FIELDS = [
   { value: "other", label: "Other" },
 ];
 
+const FIELD_GOALS: Record<string, { value: string; label: string }[]> = {
+  tech: [
+    { value: "frontend-developer", label: "Frontend Developer" },
+    { value: "backend-developer", label: "Backend Developer" },
+    { value: "fullstack-developer", label: "Full-Stack Developer" },
+    { value: "mobile-developer", label: "Mobile App Developer" },
+    { value: "data-scientist", label: "Data Scientist" },
+    { value: "ml-engineer", label: "Machine Learning Engineer" },
+    { value: "devops-engineer", label: "DevOps Engineer" },
+    { value: "cloud-architect", label: "Cloud Architect" },
+    { value: "cybersecurity-analyst", label: "Cybersecurity Analyst" },
+    { value: "ui-ux-designer", label: "UI/UX Designer" },
+  ],
+  medical: [
+    { value: "mbbs", label: "MBBS Doctor" },
+    { value: "neet-ug", label: "NEET UG Qualification" },
+    { value: "neet-pg", label: "NEET PG Qualification" },
+    { value: "aiims", label: "AIIMS Admission" },
+    { value: "nursing", label: "Registered Nurse" },
+    { value: "pharmacist", label: "Pharmacist" },
+    { value: "physiotherapist", label: "Physiotherapist" },
+    { value: "dentist", label: "Dentist (BDS)" },
+    { value: "medical-researcher", label: "Medical Researcher" },
+    { value: "hospital-admin", label: "Hospital Administrator" },
+  ],
+  exams: [
+    { value: "upsc-cse", label: "UPSC Civil Services (IAS/IPS)" },
+    { value: "ssc-cgl", label: "SSC CGL" },
+    { value: "bank-po", label: "Bank PO (IBPS/SBI)" },
+    { value: "cat-mba", label: "CAT for MBA" },
+    { value: "gate", label: "GATE Engineering" },
+    { value: "gre", label: "GRE for Masters" },
+    { value: "gmat", label: "GMAT for MBA" },
+    { value: "jee-main", label: "JEE Main" },
+    { value: "jee-advanced", label: "JEE Advanced (IIT)" },
+    { value: "clat", label: "CLAT (Law)" },
+    { value: "nda", label: "NDA Exam" },
+    { value: "cds", label: "CDS Exam" },
+  ],
+  business: [
+    { value: "startup-founder", label: "Startup Founder" },
+    { value: "product-manager", label: "Product Manager" },
+    { value: "business-analyst", label: "Business Analyst" },
+    { value: "marketing-manager", label: "Marketing Manager" },
+    { value: "sales-manager", label: "Sales Manager" },
+    { value: "consultant", label: "Management Consultant" },
+    { value: "entrepreneur", label: "Entrepreneur" },
+    { value: "finance-analyst", label: "Financial Analyst" },
+  ],
+  sports: [
+    { value: "professional-athlete", label: "Professional Athlete" },
+    { value: "fitness-trainer", label: "Certified Fitness Trainer" },
+    { value: "sports-coach", label: "Sports Coach" },
+    { value: "yoga-instructor", label: "Yoga Instructor" },
+    { value: "nutritionist", label: "Sports Nutritionist" },
+  ],
+  arts: [
+    { value: "graphic-designer", label: "Graphic Designer" },
+    { value: "video-editor", label: "Video Editor" },
+    { value: "content-creator", label: "Content Creator" },
+    { value: "photographer", label: "Professional Photographer" },
+    { value: "animator", label: "Animator" },
+    { value: "music-producer", label: "Music Producer" },
+    { value: "writer", label: "Professional Writer" },
+  ],
+  govt: [
+    { value: "ias-ips", label: "IAS/IPS Officer" },
+    { value: "state-psc", label: "State PSC Officer" },
+    { value: "railway", label: "Railway Jobs" },
+    { value: "defence", label: "Defence Services" },
+    { value: "teaching", label: "Government Teacher" },
+    { value: "psu", label: "PSU Jobs" },
+  ],
+  other: [],
+};
+
 const SKILL_LEVELS = [
   { value: "beginner", label: "Beginner" },
   { value: "intermediate", label: "Intermediate" },
@@ -33,6 +110,7 @@ const SKILL_LEVELS = [
 ];
 
 type Step = "input" | "quiz" | "analyzing" | "result";
+type GoalInputMode = "select" | "manual";
 
 const TOKEN_COST = 2;
 
@@ -43,6 +121,8 @@ export default function RealityCheck() {
 
   const [step, setStep] = useState<Step>("input");
   const [goal, setGoal] = useState("");
+  const [selectedGoal, setSelectedGoal] = useState("");
+  const [goalInputMode, setGoalInputMode] = useState<GoalInputMode>("select");
   const [field, setField] = useState("tech");
   const [skillLevel, setSkillLevel] = useState("beginner");
   const [hoursPerWeek, setHoursPerWeek] = useState(10);
@@ -54,13 +134,37 @@ export default function RealityCheck() {
   const [isDownloading, setIsDownloading] = useState(false);
 
   const deadlineWeeks = deadlineUnit === "months" ? deadlineValue * 4 : deadlineValue;
+  
+  // Get the actual goal text
+  const getGoalText = () => {
+    if (goalInputMode === "manual") return goal;
+    const fieldGoals = FIELD_GOALS[field] || [];
+    const selectedOption = fieldGoals.find(g => g.value === selectedGoal);
+    return selectedOption?.label || selectedGoal || goal;
+  };
+
+  // Reset selected goal when field changes
+  const handleFieldChange = (newField: string) => {
+    setField(newField);
+    setSelectedGoal("");
+  };
 
   const handleStartQuiz = () => {
-    if (!goal.trim()) {
-      toast({ title: "Please enter a goal", variant: "destructive" });
+    const goalText = getGoalText();
+    if (!goalText.trim()) {
+      toast({ title: "Please enter or select a goal", variant: "destructive" });
       return;
     }
     setStep("quiz");
+  };
+
+  const handleContinueWithoutQuiz = () => {
+    const goalText = getGoalText();
+    if (!goalText.trim()) {
+      toast({ title: "Please enter or select a goal", variant: "destructive" });
+      return;
+    }
+    runAnalysis(null);
   };
 
   const handleQuizComplete = async (results: QuizResults) => {
@@ -84,13 +188,14 @@ export default function RealityCheck() {
       return;
     }
 
+    const goalText = getGoalText();
     setStep("analyzing");
 
     try {
       const { data, error } = await supabase.functions.invoke("analyze-goal", {
         body: {
           type: "reality-check-v2",
-          goal,
+          goal: goalText,
           field,
           skillLevel,
           calibratedSkillLevel: quiz?.calibratedLevel || skillLevel,
@@ -113,7 +218,7 @@ export default function RealityCheck() {
         .from("goals")
         .insert({
           user_id: user.id,
-          title: goal,
+          title: goalText,
           skill_level: skillLevel,
           hours_per_week: hoursPerWeek,
           deadline: new Date(Date.now() + deadlineWeeks * 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
@@ -146,16 +251,19 @@ export default function RealityCheck() {
   };
 
   const handleDecompose = () => {
+    const goalText = getGoalText();
     if (savedGoalId) {
-      navigate(`/problem-decomposer?goalId=${savedGoalId}&goal=${encodeURIComponent(goal)}`);
+      navigate(`/problem-decomposer?goalId=${savedGoalId}&goal=${encodeURIComponent(goalText)}`);
     } else {
-      navigate(`/problem-decomposer?goal=${encodeURIComponent(goal)}`);
+      navigate(`/problem-decomposer?goal=${encodeURIComponent(goalText)}`);
     }
   };
 
   const handleTryAnother = () => {
     setStep("input");
     setGoal("");
+    setSelectedGoal("");
+    setGoalInputMode("select");
     setResult(null);
     setQuizResults(null);
     setSavedGoalId(null);
@@ -206,26 +314,14 @@ export default function RealityCheck() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Goal Input */}
-              <div className="space-y-2">
-                <Label htmlFor="goal">Target Goal or Position</Label>
-                <Input
-                  id="goal"
-                  placeholder="e.g., Become a Full-Stack Developer, Clear UPSC, Launch a startup..."
-                  value={goal}
-                  onChange={(e) => setGoal(e.target.value)}
-                  className="text-base"
-                />
-              </div>
-
-              {/* Field Selection */}
+              {/* Field Selection - First */}
               <div className="space-y-2">
                 <Label>Field</Label>
-                <Select value={field} onValueChange={setField}>
-                  <SelectTrigger>
+                <Select value={field} onValueChange={handleFieldChange}>
+                  <SelectTrigger className="bg-background">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-popover border border-border z-50">
                     {FIELDS.map((f) => (
                       <SelectItem key={f.value} value={f.value}>
                         {f.label}
@@ -235,14 +331,87 @@ export default function RealityCheck() {
                 </Select>
               </div>
 
+              {/* Goal Input - Two Sections */}
+              <div className="space-y-4">
+                <Label>Target Goal or Position</Label>
+                
+                {/* Toggle between modes */}
+                <div className="flex gap-2 p-1 rounded-lg bg-secondary/50">
+                  <Button
+                    type="button"
+                    variant={goalInputMode === "select" ? "default" : "ghost"}
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => setGoalInputMode("select")}
+                  >
+                    Choose from list
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={goalInputMode === "manual" ? "default" : "ghost"}
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => setGoalInputMode("manual")}
+                  >
+                    Write manually
+                  </Button>
+                </div>
+
+                {/* Select Mode */}
+                {goalInputMode === "select" && (
+                  <div className="space-y-2">
+                    {FIELD_GOALS[field]?.length > 0 ? (
+                      <Select value={selectedGoal} onValueChange={setSelectedGoal}>
+                        <SelectTrigger className="bg-background">
+                          <SelectValue placeholder="Select a goal/position..." />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover border border-border z-50 max-h-[300px]">
+                          {FIELD_GOALS[field].map((g) => (
+                            <SelectItem key={g.value} value={g.value}>
+                              {g.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="p-4 rounded-lg bg-secondary/50 border border-border text-center">
+                        <p className="text-sm text-muted-foreground">
+                          No preset goals for this field. Please write your goal manually.
+                        </p>
+                        <Button
+                          type="button"
+                          variant="link"
+                          size="sm"
+                          onClick={() => setGoalInputMode("manual")}
+                          className="mt-2"
+                        >
+                          Switch to manual input
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Manual Mode */}
+                {goalInputMode === "manual" && (
+                  <Input
+                    id="goal"
+                    placeholder="e.g., Become a Full-Stack Developer, Clear UPSC, Launch a startup..."
+                    value={goal}
+                    onChange={(e) => setGoal(e.target.value)}
+                    className="text-base bg-background"
+                  />
+                )}
+              </div>
+
               {/* Skill Level */}
               <div className="space-y-2">
                 <Label>Current Skill Level (Self-Assessment)</Label>
                 <Select value={skillLevel} onValueChange={setSkillLevel}>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-background">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-popover border border-border z-50">
                     {SKILL_LEVELS.map((s) => (
                       <SelectItem key={s.value} value={s.value}>
                         {s.label}
@@ -282,13 +451,13 @@ export default function RealityCheck() {
                     max={deadlineUnit === "months" ? 36 : 52}
                     value={deadlineValue}
                     onChange={(e) => setDeadlineValue(parseInt(e.target.value) || 1)}
-                    className="w-24"
+                    className="w-24 bg-background"
                   />
                   <Select value={deadlineUnit} onValueChange={(v: "weeks" | "months") => setDeadlineUnit(v)}>
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger className="w-32 bg-background">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-popover border border-border z-50">
                       <SelectItem value="weeks">Weeks</SelectItem>
                       <SelectItem value="months">Months</SelectItem>
                     </SelectContent>
@@ -299,13 +468,31 @@ export default function RealityCheck() {
                 </p>
               </div>
 
-              <Button onClick={handleStartQuiz} className="w-full" size="lg" disabled={!goal.trim()}>
-                <Brain className="h-4 w-4 mr-2" />
-                Continue to Skill Quiz
-              </Button>
+              {/* Action Buttons */}
+              <div className="space-y-3">
+                <Button 
+                  onClick={handleStartQuiz} 
+                  className="w-full" 
+                  size="lg" 
+                  disabled={goalInputMode === "select" ? !selectedGoal : !goal.trim()}
+                >
+                  <Brain className="h-4 w-4 mr-2" />
+                  Continue to Skill Quiz
+                </Button>
+
+                <Button 
+                  onClick={handleContinueWithoutQuiz} 
+                  variant="outline"
+                  className="w-full" 
+                  size="lg"
+                  disabled={goalInputMode === "select" ? !selectedGoal : !goal.trim()}
+                >
+                  Continue without Skill Quiz
+                </Button>
+              </div>
 
               <p className="text-xs text-center text-muted-foreground">
-                Next: A short quiz to calibrate your actual skill level for more accurate analysis
+                The skill quiz helps calibrate your actual level for more accurate analysis
               </p>
             </CardContent>
           </Card>
