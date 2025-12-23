@@ -14,16 +14,430 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      daily_plans: {
+        Row: {
+          available_minutes: number
+          completed_minutes: number
+          created_at: string
+          focus_level: string
+          focus_warning: string | null
+          id: string
+          plan_date: string
+          selected_tasks: Json
+          total_planned_minutes: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          available_minutes: number
+          completed_minutes?: number
+          created_at?: string
+          focus_level: string
+          focus_warning?: string | null
+          id?: string
+          plan_date: string
+          selected_tasks?: Json
+          total_planned_minutes?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          available_minutes?: number
+          completed_minutes?: number
+          created_at?: string
+          focus_level?: string
+          focus_warning?: string | null
+          id?: string
+          plan_date?: string
+          selected_tasks?: Json
+          total_planned_minutes?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      goals: {
+        Row: {
+          available_hours: number | null
+          created_at: string
+          deadline: string
+          description: string | null
+          estimated_hours: number | null
+          feasibility_status:
+            | Database["public"]["Enums"]["feasibility_status"]
+            | null
+          hour_gap: number | null
+          hours_per_week: number
+          id: string
+          is_active: boolean
+          recommendations: Json | null
+          skill_level: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          available_hours?: number | null
+          created_at?: string
+          deadline: string
+          description?: string | null
+          estimated_hours?: number | null
+          feasibility_status?:
+            | Database["public"]["Enums"]["feasibility_status"]
+            | null
+          hour_gap?: number | null
+          hours_per_week: number
+          id?: string
+          is_active?: boolean
+          recommendations?: Json | null
+          skill_level: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          available_hours?: number | null
+          created_at?: string
+          deadline?: string
+          description?: string | null
+          estimated_hours?: number | null
+          feasibility_status?:
+            | Database["public"]["Enums"]["feasibility_status"]
+            | null
+          hour_gap?: number | null
+          hours_per_week?: number
+          id?: string
+          is_active?: boolean
+          recommendations?: Json | null
+          skill_level?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      micro_tasks: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          estimated_minutes: number
+          id: string
+          order_index: number
+          status: Database["public"]["Enums"]["task_status"]
+          task_id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          estimated_minutes: number
+          id?: string
+          order_index: number
+          status?: Database["public"]["Enums"]["task_status"]
+          task_id: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          estimated_minutes?: number
+          id?: string
+          order_index?: number
+          status?: Database["public"]["Enums"]["task_status"]
+          task_id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "micro_tasks_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          completed_goals: number
+          created_at: string
+          current_streak: number
+          email: string | null
+          full_name: string | null
+          id: string
+          longest_streak: number
+          tokens: number
+          total_goals: number
+          total_hours_logged: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          completed_goals?: number
+          created_at?: string
+          current_streak?: number
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          longest_streak?: number
+          tokens?: number
+          total_goals?: number
+          total_hours_logged?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          completed_goals?: number
+          created_at?: string
+          current_streak?: number
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          longest_streak?: number
+          tokens?: number
+          total_goals?: number
+          total_hours_logged?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      roadmap_steps: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          dependencies: string[] | null
+          description: string | null
+          estimated_hours: number
+          id: string
+          is_milestone: boolean
+          order_index: number
+          roadmap_id: string
+          status: Database["public"]["Enums"]["task_status"]
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          dependencies?: string[] | null
+          description?: string | null
+          estimated_hours: number
+          id?: string
+          is_milestone?: boolean
+          order_index: number
+          roadmap_id: string
+          status?: Database["public"]["Enums"]["task_status"]
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          dependencies?: string[] | null
+          description?: string | null
+          estimated_hours?: number
+          id?: string
+          is_milestone?: boolean
+          order_index?: number
+          roadmap_id?: string
+          status?: Database["public"]["Enums"]["task_status"]
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roadmap_steps_roadmap_id_fkey"
+            columns: ["roadmap_id"]
+            isOneToOne: false
+            referencedRelation: "roadmaps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      roadmaps: {
+        Row: {
+          completed_steps: number
+          created_at: string
+          goal_id: string
+          id: string
+          is_active: boolean
+          last_regenerated_at: string | null
+          regeneration_count: number
+          title: string
+          total_steps: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_steps?: number
+          created_at?: string
+          goal_id: string
+          id?: string
+          is_active?: boolean
+          last_regenerated_at?: string | null
+          regeneration_count?: number
+          title: string
+          total_steps?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_steps?: number
+          created_at?: string
+          goal_id?: string
+          id?: string
+          is_active?: boolean
+          last_regenerated_at?: string | null
+          regeneration_count?: number
+          title?: string
+          total_steps?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roadmaps_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          created_at: string
+          description: string | null
+          estimated_hours: number
+          goal_id: string
+          id: string
+          order_index: number
+          phase_number: number
+          status: Database["public"]["Enums"]["task_status"]
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          estimated_hours: number
+          goal_id: string
+          id?: string
+          order_index: number
+          phase_number: number
+          status?: Database["public"]["Enums"]["task_status"]
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          estimated_hours?: number
+          goal_id?: string
+          id?: string
+          order_index?: number
+          phase_number?: number
+          status?: Database["public"]["Enums"]["task_status"]
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      token_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          description: string
+          feature_used: string | null
+          id: string
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string
+          description: string
+          feature_used?: string | null
+          id?: string
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          description?: string
+          feature_used?: string | null
+          id?: string
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
+      feasibility_status: "realistic" | "risky" | "unrealistic"
+      task_status: "locked" | "unlocked" | "in_progress" | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +564,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+      feasibility_status: ["realistic", "risky", "unrealistic"],
+      task_status: ["locked", "unlocked", "in_progress", "completed"],
+    },
   },
 } as const
