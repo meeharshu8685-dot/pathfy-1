@@ -17,6 +17,7 @@ interface AnalyzeRequest {
   focusLevel?: number;
   existingTasks?: unknown[];
   quizResults?: unknown;
+  consistencyNote?: string;
 }
 
 const FIELD_EFFORT_TABLES = `
@@ -260,32 +261,57 @@ Return a JSON object with EXACTLY this structure:
   "closingMotivation": "2-3 lines max of positive, grounded encouragement - no hustle language"
 }`,
 
-  "optimize": `You are a study session optimizer. Decide what the student should do TODAY.
+  "optimize": `You are a daily optimizer for a student or early-career learner. Your job is to decide what they should do TODAY.
 
-RULES:
-- Suggest MAXIMUM 3 tasks
-- Match task difficulty to available time and focus level
-- Prefer critical-path tasks (those blocking other tasks)
-- If time < 30 min, suggest review/revision only
-- If focus is low (<30), avoid new concepts entirely
-- Be honest about what can be accomplished
+TONE RULES:
+- Calm, honest, supportive
+- No pressure or guilt
+- If they can't do much today, that's okay
+- Focus on execution, not planning
 
-Focus level guide:
-- 0-30: Low focus - only passive review, no new learning
-- 31-70: Medium focus - can do moderate tasks
-- 71-100: High focus - can tackle complex tasks
+CORE RULES:
+- MAXIMUM 3 tasks per day (never more)
+- Tasks MUST fit within available time
+- Always prioritize critical roadmap tasks first
+- Match task difficulty to energy level
+- If nothing fits, suggest light revision or rest
+- Be honest about what can realistically be accomplished
 
-Return a JSON object:
+ENERGY LEVEL GUIDE:
+- 0-30: Low energy - only passive review, light reading, no new concepts
+- 31-60: Medium energy - can do moderate tasks, practice exercises
+- 61-100: High energy - can tackle complex new concepts, challenging projects
+
+TIME CONSTRAINTS:
+- If time < 20 min: Suggest quick review or single micro-task only
+- If time 20-45 min: 1-2 focused tasks maximum
+- If time 45-90 min: 2-3 tasks possible
+- If time > 90 min: Full 3 tasks, include breaks suggestion
+
+CONSISTENCY CONTEXT:
+- If user has been consistent: acknowledge and encourage continuation
+- If user has gaps: be supportive, suggest smaller tasks to rebuild momentum
+- Never shame or guilt for missed days
+
+REST SUGGESTION:
+If energy is very low (< 20) OR time is very limited (< 15 min), respond with:
+- A single "rest" or "light review" suggestion
+- A supportive message about rest being productive
+
+Return a JSON object with EXACTLY this structure:
 {
   "tasks": [{
     "id": "1",
-    "title": "Task description",
+    "title": "Clear, actionable task description",
     "estimatedMinutes": number,
-    "priority": "critical" | "high" | "medium",
-    "reason": "why this task now"
+    "priority": "critical" | "high" | "medium" | "light",
+    "reason": "Brief, honest reason why this task now",
+    "difficulty": "easy" | "moderate" | "challenging"
   }],
-  "focusWarning": "optional warning if focus is low",
-  "totalTime": total minutes
+  "focusWarning": "Optional calm warning if energy/time is limited - supportive tone",
+  "totalTime": number (total minutes),
+  "mentorNote": "1-2 sentences of calm, supportive guidance for today - no pressure",
+  "suggestRest": boolean (true if user should rest instead)
 }`
 };
 
@@ -377,12 +403,26 @@ Write as if you've personally guided students through this path before.`;
         break;
 
       case "optimize":
-        userPrompt = `Optimize today's study session:
-Available time: ${availableMinutes || 60} minutes
-Focus level: ${focusLevel || 50}/100
-${existingTasks ? `Pending tasks: ${JSON.stringify(existingTasks)}` : "No specific pending tasks"}
+        const recentTasks = existingTasks || [];
+        const taskContext = recentTasks.length > 0 
+          ? `CURRENT ROADMAP TASKS (prioritize these):\n${JSON.stringify(recentTasks, null, 2)}`
+          : "No active roadmap tasks - suggest general review or foundational work";
+        
+        userPrompt = `Decide what this student should do TODAY:
 
-Suggest what to do RIGHT NOW. Maximum 3 tasks. Be realistic about what can be done.`;
+AVAILABLE TIME: ${availableMinutes || 60} minutes
+ENERGY LEVEL: ${focusLevel || 50}/100
+
+${taskContext}
+
+CONSISTENCY HISTORY: ${body.consistencyNote || "First session or unknown history"}
+
+Based on their time (${availableMinutes || 60} min) and energy (${focusLevel || 50}/100), suggest what to execute RIGHT NOW.
+- Maximum 3 tasks
+- Tasks must fit within ${availableMinutes || 60} minutes total
+- If energy < 30, suggest only light review or rest
+- Be calm, honest, and supportive`;
+        break;
         break;
 
       default:
