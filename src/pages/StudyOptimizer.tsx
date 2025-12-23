@@ -1,11 +1,16 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TokenDisplay } from "@/components/shared/TokenDisplay";
-import { Clock, Zap, Brain, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Clock, Zap, Brain, AlertTriangle, CheckCircle2, Coins } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTokens } from "@/hooks/useTokens";
+import { toast } from "@/hooks/use-toast";
 
 interface TodayTask {
   id: string;
@@ -21,91 +26,109 @@ interface OptimizerResult {
   totalTime: number;
 }
 
-const mockResults: Record<string, OptimizerResult> = {
-  low: {
-    tasks: [
-      {
-        id: "1",
-        title: "Review SQL JOIN syntax (passive)",
-        estimatedMinutes: 25,
-        priority: "medium",
-        reason: "Low-intensity review, suitable for low focus",
-      },
-    ],
-    focusWarning: "⚠️ Low focus detected. Avoiding new concepts. Focus on review only.",
-    totalTime: 25,
-  },
-  medium: {
-    tasks: [
-      {
-        id: "1",
-        title: "Complete REST API quiz",
-        estimatedMinutes: 30,
-        priority: "high",
-        reason: "On critical path, builds on yesterday's work",
-      },
-      {
-        id: "2",
-        title: "Setup PostgreSQL locally",
-        estimatedMinutes: 45,
-        priority: "critical",
-        reason: "Blocking next 3 tasks in your roadmap",
-      },
-    ],
-    totalTime: 75,
-  },
-  high: {
-    tasks: [
-      {
-        id: "1",
-        title: "Implement JWT authentication endpoint",
-        estimatedMinutes: 90,
-        priority: "critical",
-        reason: "Complex task, requires deep focus. You have the capacity now.",
-      },
-      {
-        id: "2",
-        title: "Write unit tests for auth middleware",
-        estimatedMinutes: 45,
-        priority: "high",
-        reason: "Validates previous work, prevents future bugs",
-      },
-      {
-        id: "3",
-        title: "Document API endpoints in README",
-        estimatedMinutes: 25,
-        priority: "medium",
-        reason: "Good wind-down task, uses remaining time productively",
-      },
-    ],
-    totalTime: 160,
-  },
-};
+const TOKEN_COST = 1;
 
 export default function StudyOptimizer() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { tokens, spendTokens, canAfford } = useTokens();
+
   const [availableTime, setAvailableTime] = useState("");
   const [focusLevel, setFocusLevel] = useState([50]);
   const [result, setResult] = useState<OptimizerResult | null>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsOptimizing(true);
 
-    setTimeout(() => {
-      const focus = focusLevel[0];
-      if (focus < 30) {
-        setResult(mockResults.low);
-      } else if (focus < 70) {
-        setResult(mockResults.medium);
-      } else {
-        setResult(mockResults.high);
-      }
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please login to use this feature",
+        variant: "destructive",
+      });
+      navigate("/login");
+      return;
+    }
+
+    if (!canAfford(TOKEN_COST)) {
+      toast({
+        title: "Insufficient Tokens",
+        description: `You need ${TOKEN_COST} token. You have ${tokens} tokens.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsOptimizing(true);
+    setResult(null);
+
+    try {
+      // Fetch user's pending tasks from roadmaps
+      const { data: pendingTasks } = await supabase
+        .from("roadmap_steps")
+        .select("title, estimated_hours, status")
+        .eq("user_id", user.id)
+        .in("status", ["unlocked", "in_progress"])
+        .limit(10);
+
+      const { data, error } = await supabase.functions.invoke("analyze-goal", {
+        body: {
+          type: "optimize",
+          goal: "Daily study session",
+          availableMinutes: parseInt(availableTime) || 60,
+          focusLevel: focusLevel[0],
+          existingTasks: pendingTasks || [],
+        },
+      });
+
+      if (error) throw error;
+
+      const aiResult = data.result as OptimizerResult;
+      setResult(aiResult);
+
+      await spendTokens.mutateAsync({
+        amount: TOKEN_COST,
+        feature: "optimize",
+        description: `Optimized ${availableTime} min session`,
+      });
+
+      // Save daily plan
+      const today = new Date().toISOString().split("T")[0];
+      await supabase.from("daily_plans").insert({
+        user_id: user.id,
+        plan_date: today,
+        available_minutes: parseInt(availableTime) || 60,
+        focus_level: getFocusLabel(focusLevel[0]),
+        focus_warning: aiResult.focusWarning || null,
+        selected_tasks: aiResult.tasks as unknown as import("@/integrations/supabase/types").Json,
+        total_planned_minutes: aiResult.totalTime,
+      });
+
+      toast({
+        title: "Optimization Complete",
+        description: `${aiResult.tasks.length} tasks for ${aiResult.totalTime} minutes.`,
+      });
+
+    } catch (error) {
+      console.error("Optimization error:", error);
+      toast({
+        title: "Optimization Failed",
+        description: error instanceof Error ? error.message : "Failed to optimize",
+        variant: "destructive",
+      });
+    } finally {
       setIsOptimizing(false);
-    }, 1200);
+    }
   };
 
   const getFocusLabel = (value: number) => {
+    if (value < 30) return "low";
+    if (value < 70) return "medium";
+    return "high";
+  };
+
+  const getFocusDescription = (value: number) => {
     if (value < 30) return "Low (tired/distracted)";
     if (value < 70) return "Medium (normal)";
     return "High (sharp/focused)";
@@ -131,7 +154,7 @@ export default function StudyOptimizer() {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary border border-border mb-6">
               <Clock className="w-4 h-4 text-primary" />
               <span className="text-sm font-medium">Study Time Optimizer</span>
-              <TokenDisplay tokens={1} size="sm" className="ml-2" />
+              <TokenDisplay tokens={TOKEN_COST} size="sm" className="ml-2" />
             </div>
             <h1 className="text-4xl font-bold mb-4">
               What Should You Do <span className="gradient-text">Right Now?</span>
@@ -139,6 +162,12 @@ export default function StudyOptimizer() {
             <p className="text-muted-foreground">
               Tell us your time and focus. We'll tell you exactly what to execute.
             </p>
+            {user && (
+              <div className="mt-4 inline-flex items-center gap-2 text-sm text-muted-foreground">
+                <Coins className="w-4 h-4" />
+                Your tokens: {tokens}
+              </div>
+            )}
           </div>
 
           <div className="max-w-2xl mx-auto">
@@ -166,7 +195,7 @@ export default function StudyOptimizer() {
                 <div className="flex items-center justify-between">
                   <Label>Current Focus Level</Label>
                   <span className="text-sm font-mono text-primary">
-                    {getFocusLabel(focusLevel[0])}
+                    {getFocusDescription(focusLevel[0])}
                   </span>
                 </div>
                 <Slider
@@ -195,7 +224,7 @@ export default function StudyOptimizer() {
                 ) : (
                   <>
                     <Clock className="w-4 h-4" />
-                    Optimize My Time
+                    Optimize My Time ({TOKEN_COST} token)
                   </>
                 )}
               </Button>

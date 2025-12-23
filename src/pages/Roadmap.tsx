@@ -1,12 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { TokenDisplay } from "@/components/shared/TokenDisplay";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { Map, Zap, Lock, Unlock, Check, ArrowRight } from "lucide-react";
+import { Map, Zap, Lock, Unlock, Check, ArrowRight, Coins } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTokens } from "@/hooks/useTokens";
+import { toast } from "@/hooks/use-toast";
 
 interface RoadmapStep {
   id: number;
@@ -17,34 +22,137 @@ interface RoadmapStep {
   milestone?: string;
 }
 
-const mockRoadmap: RoadmapStep[] = [
-  { id: 1, task: "Learn HTTP Protocol Basics", dependencies: [], estimatedHours: 3, status: "completed" },
-  { id: 2, task: "Practice API Requests with Postman", dependencies: [1], estimatedHours: 2, status: "completed" },
-  { id: 3, task: "Understand REST Principles", dependencies: [1], estimatedHours: 2, status: "unlocked", milestone: "Foundations Complete" },
-  { id: 4, task: "Setup Node.js + Express Environment", dependencies: [3], estimatedHours: 2, status: "locked" },
-  { id: 5, task: "Build First GET Endpoint", dependencies: [4], estimatedHours: 1, status: "locked" },
-  { id: 6, task: "Implement CRUD Operations", dependencies: [5], estimatedHours: 4, status: "locked", milestone: "Basic API Complete" },
-  { id: 7, task: "Learn SQL Fundamentals", dependencies: [6], estimatedHours: 4, status: "locked" },
-  { id: 8, task: "Setup PostgreSQL Database", dependencies: [7], estimatedHours: 2, status: "locked" },
-  { id: 9, task: "Connect API to Database", dependencies: [8], estimatedHours: 3, status: "locked", milestone: "Database Integration" },
-  { id: 10, task: "Implement JWT Authentication", dependencies: [9], estimatedHours: 4, status: "locked" },
-  { id: 11, task: "Add Protected Routes", dependencies: [10], estimatedHours: 2, status: "locked", milestone: "Auth Complete" },
-  { id: 12, task: "Deploy to Production", dependencies: [11], estimatedHours: 3, status: "locked", milestone: "🎯 Goal Achieved" },
-];
+const TOKEN_COST = 2;
 
 export default function Roadmap() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
+  const { tokens, spendTokens, canAfford } = useTokens();
+
   const [goal, setGoal] = useState("");
+  const [goalId, setGoalId] = useState<string | null>(null);
   const [steps, setSteps] = useState<RoadmapStep[] | null>(null);
   const [isBuilding, setIsBuilding] = useState(false);
+  const [roadmapId, setRoadmapId] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    const goalParam = searchParams.get("goal");
+    const goalIdParam = searchParams.get("goalId");
+    if (goalParam) setGoal(goalParam);
+    if (goalIdParam) setGoalId(goalIdParam);
+  }, [searchParams]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsBuilding(true);
 
-    setTimeout(() => {
-      setSteps(mockRoadmap);
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please login to use this feature",
+        variant: "destructive",
+      });
+      navigate("/login");
+      return;
+    }
+
+    if (!canAfford(TOKEN_COST)) {
+      toast({
+        title: "Insufficient Tokens",
+        description: `You need ${TOKEN_COST} tokens. You have ${tokens} tokens.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsBuilding(true);
+    setSteps(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("analyze-goal", {
+        body: {
+          type: "roadmap",
+          goal,
+        },
+      });
+
+      if (error) throw error;
+
+      const aiSteps = data.result as RoadmapStep[];
+      setSteps(aiSteps);
+
+      await spendTokens.mutateAsync({
+        amount: TOKEN_COST,
+        feature: "roadmap",
+        description: `Roadmap for: ${goal.substring(0, 50)}...`,
+      });
+
+      // Create or use existing goal
+      let actualGoalId = goalId;
+      if (!actualGoalId) {
+        const { data: goalData, error: goalError } = await supabase
+          .from("goals")
+          .insert({
+            user_id: user.id,
+            title: goal,
+            skill_level: "beginner",
+            hours_per_week: 10,
+            deadline: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+            is_active: true,
+          })
+          .select()
+          .single();
+
+        if (goalError) throw goalError;
+        actualGoalId = goalData.id;
+      }
+
+      // Create roadmap
+      const { data: roadmapData, error: roadmapError } = await supabase
+        .from("roadmaps")
+        .insert({
+          user_id: user.id,
+          goal_id: actualGoalId,
+          title: `Roadmap: ${goal.substring(0, 50)}`,
+          total_steps: aiSteps.length,
+          completed_steps: 0,
+        })
+        .select()
+        .single();
+
+      if (roadmapError) throw roadmapError;
+      setRoadmapId(roadmapData.id);
+
+      // Save steps
+      for (const step of aiSteps) {
+        await supabase.from("roadmap_steps").insert({
+          user_id: user.id,
+          roadmap_id: roadmapData.id,
+          title: step.task,
+          order_index: step.id,
+          dependencies: step.dependencies.map(String),
+          estimated_hours: step.estimatedHours,
+          status: step.status,
+          is_milestone: !!step.milestone,
+          description: step.milestone || null,
+        });
+      }
+
+      toast({
+        title: "Roadmap Created",
+        description: `${aiSteps.length} steps with dependency tracking.`,
+      });
+
+    } catch (error) {
+      console.error("Roadmap error:", error);
+      toast({
+        title: "Roadmap Failed",
+        description: error instanceof Error ? error.message : "Failed to build roadmap",
+        variant: "destructive",
+      });
+    } finally {
       setIsBuilding(false);
-    }, 2000);
+    }
   };
 
   const completedSteps = steps?.filter((s) => s.status === "completed").length || 0;
@@ -71,7 +179,7 @@ export default function Roadmap() {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary border border-border mb-6">
               <Map className="w-4 h-4 text-primary" />
               <span className="text-sm font-medium">Roadmap Builder</span>
-              <TokenDisplay tokens={2} size="sm" className="ml-2" />
+              <TokenDisplay tokens={TOKEN_COST} size="sm" className="ml-2" />
             </div>
             <h1 className="text-4xl font-bold mb-4">
               Dependency-Locked <span className="gradient-text">Execution Path</span>
@@ -79,6 +187,12 @@ export default function Roadmap() {
             <p className="text-muted-foreground">
               No task starts before its prerequisites. Milestones mark your progress.
             </p>
+            {user && (
+              <div className="mt-4 inline-flex items-center gap-2 text-sm text-muted-foreground">
+                <Coins className="w-4 h-4" />
+                Your tokens: {tokens}
+              </div>
+            )}
           </div>
 
           <div className="max-w-3xl mx-auto">
@@ -105,7 +219,7 @@ export default function Roadmap() {
                   ) : (
                     <>
                       <Map className="w-4 h-4" />
-                      Build My Roadmap
+                      Build My Roadmap ({TOKEN_COST} tokens)
                     </>
                   )}
                 </Button>

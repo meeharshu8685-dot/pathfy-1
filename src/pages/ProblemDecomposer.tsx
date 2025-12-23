@@ -1,15 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { TokenDisplay } from "@/components/shared/TokenDisplay";
-import { Puzzle, Zap, ChevronDown, ChevronRight, Clock } from "lucide-react";
+import { Puzzle, Zap, ChevronDown, ChevronRight, Clock, Coins } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTokens } from "@/hooks/useTokens";
+import { toast } from "@/hooks/use-toast";
 
 interface MicroTask {
   id: string;
@@ -29,91 +34,133 @@ interface Phase {
   tasks: Task[];
 }
 
-const mockDecomposition: Phase[] = [
-  {
-    id: "1",
-    name: "Phase 1: Foundations",
-    tasks: [
-      {
-        id: "1-1",
-        title: "Learn HTTP Protocol",
-        microTasks: [
-          { id: "1-1-1", title: "Read HTTP/1.1 specification overview (30 pages)", estimatedMinutes: 60 },
-          { id: "1-1-2", title: "Practice: Analyze 10 HTTP requests using browser DevTools", estimatedMinutes: 45 },
-          { id: "1-1-3", title: "Write a quiz: Identify headers from request/response", estimatedMinutes: 30 },
-        ],
-      },
-      {
-        id: "1-2",
-        title: "Understand REST Principles",
-        microTasks: [
-          { id: "1-2-1", title: "Read REST architectural constraints document", estimatedMinutes: 45 },
-          { id: "1-2-2", title: "Identify: Map 5 real APIs to REST principles", estimatedMinutes: 60 },
-          { id: "1-2-3", title: "Design: Create REST endpoints for a todo app (on paper)", estimatedMinutes: 45 },
-        ],
-      },
-    ],
-  },
-  {
-    id: "2",
-    name: "Phase 2: Core Skills",
-    tasks: [
-      {
-        id: "2-1",
-        title: "Build Your First API",
-        microTasks: [
-          { id: "2-1-1", title: "Setup: Initialize Express.js project with TypeScript", estimatedMinutes: 45 },
-          { id: "2-1-2", title: "Code: Implement GET /health endpoint", estimatedMinutes: 20 },
-          { id: "2-1-3", title: "Code: Implement CRUD for /users (in-memory)", estimatedMinutes: 90 },
-          { id: "2-1-4", title: "Test: Verify all endpoints using Postman", estimatedMinutes: 30 },
-        ],
-      },
-      {
-        id: "2-2",
-        title: "Add Database Integration",
-        microTasks: [
-          { id: "2-2-1", title: "Setup: Install and configure PostgreSQL locally", estimatedMinutes: 60 },
-          { id: "2-2-2", title: "Learn: Complete SQL basics tutorial (SELECT, INSERT, UPDATE)", estimatedMinutes: 90 },
-          { id: "2-2-3", title: "Code: Connect API to database using Prisma", estimatedMinutes: 60 },
-          { id: "2-2-4", title: "Migrate: Move in-memory data to PostgreSQL", estimatedMinutes: 45 },
-        ],
-      },
-    ],
-  },
-  {
-    id: "3",
-    name: "Phase 3: Authentication",
-    tasks: [
-      {
-        id: "3-1",
-        title: "Implement JWT Authentication",
-        microTasks: [
-          { id: "3-1-1", title: "Read: JWT specification and security best practices", estimatedMinutes: 45 },
-          { id: "3-1-2", title: "Code: Implement /register and /login endpoints", estimatedMinutes: 90 },
-          { id: "3-1-3", title: "Code: Create authentication middleware", estimatedMinutes: 60 },
-          { id: "3-1-4", title: "Test: Verify protected routes require valid tokens", estimatedMinutes: 30 },
-        ],
-      },
-    ],
-  },
-];
+const TOKEN_COST = 1;
 
 export default function ProblemDecomposer() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
+  const { tokens, spendTokens, canAfford } = useTokens();
+
   const [goal, setGoal] = useState("");
+  const [goalId, setGoalId] = useState<string | null>(null);
   const [phases, setPhases] = useState<Phase[] | null>(null);
   const [isDecomposing, setIsDecomposing] = useState(false);
   const [expandedPhases, setExpandedPhases] = useState<string[]>([]);
   const [expandedTasks, setExpandedTasks] = useState<string[]>([]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsDecomposing(true);
+  useEffect(() => {
+    const goalParam = searchParams.get("goal");
+    const goalIdParam = searchParams.get("goalId");
+    if (goalParam) setGoal(goalParam);
+    if (goalIdParam) setGoalId(goalIdParam);
+  }, [searchParams]);
 
-    setTimeout(() => {
-      setPhases(mockDecomposition);
-      setExpandedPhases(["1"]);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please login to use this feature",
+        variant: "destructive",
+      });
+      navigate("/login");
+      return;
+    }
+
+    if (!canAfford(TOKEN_COST)) {
+      toast({
+        title: "Insufficient Tokens",
+        description: `You need ${TOKEN_COST} token. You have ${tokens} tokens.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsDecomposing(true);
+    setPhases(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("analyze-goal", {
+        body: {
+          type: "decompose",
+          goal,
+        },
+      });
+
+      if (error) throw error;
+
+      const aiPhases = data.result as Phase[];
+      setPhases(aiPhases);
+      setExpandedPhases([aiPhases[0]?.id || "1"]);
+
+      await spendTokens.mutateAsync({
+        amount: TOKEN_COST,
+        feature: "decompose",
+        description: `Decomposed: ${goal.substring(0, 50)}...`,
+      });
+
+      // If we have a goalId, save tasks to database
+      if (goalId) {
+        let phaseNumber = 1;
+        let orderIndex = 0;
+
+        for (const phase of aiPhases) {
+          for (const task of phase.tasks) {
+            const totalMinutes = task.microTasks.reduce((sum, mt) => sum + mt.estimatedMinutes, 0);
+            
+            const { data: taskData, error: taskError } = await supabase
+              .from("tasks")
+              .insert({
+                user_id: user.id,
+                goal_id: goalId,
+                title: task.title,
+                phase_number: phaseNumber,
+                order_index: orderIndex++,
+                estimated_hours: Math.ceil(totalMinutes / 60),
+                status: orderIndex === 1 ? "unlocked" : "locked",
+              })
+              .select()
+              .single();
+
+            if (taskError) {
+              console.error("Error saving task:", taskError);
+              continue;
+            }
+
+            // Save micro-tasks
+            let microOrderIndex = 0;
+            for (const microTask of task.microTasks) {
+              await supabase.from("micro_tasks").insert({
+                user_id: user.id,
+                task_id: taskData.id,
+                title: microTask.title,
+                estimated_minutes: microTask.estimatedMinutes,
+                order_index: microOrderIndex++,
+                status: microOrderIndex === 1 ? "unlocked" : "locked",
+              });
+            }
+          }
+          phaseNumber++;
+        }
+      }
+
+      toast({
+        title: "Decomposition Complete",
+        description: `Created ${aiPhases.length} phases with ${aiPhases.reduce((acc, p) => acc + p.tasks.length, 0)} tasks.`,
+      });
+
+    } catch (error) {
+      console.error("Decomposition error:", error);
+      toast({
+        title: "Decomposition Failed",
+        description: error instanceof Error ? error.message : "Failed to decompose goal",
+        variant: "destructive",
+      });
+    } finally {
       setIsDecomposing(false);
-    }, 1500);
+    }
   };
 
   const togglePhase = (phaseId: string) => {
@@ -140,6 +187,14 @@ export default function ProblemDecomposer() {
     );
   };
 
+  const handleBuildRoadmap = () => {
+    if (goalId) {
+      navigate(`/roadmap?goalId=${goalId}&goal=${encodeURIComponent(goal)}`);
+    } else {
+      navigate(`/roadmap?goal=${encodeURIComponent(goal)}`);
+    }
+  };
+
   return (
     <Layout>
       <div className="py-12">
@@ -149,7 +204,7 @@ export default function ProblemDecomposer() {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary border border-border mb-6">
               <Puzzle className="w-4 h-4 text-primary" />
               <span className="text-sm font-medium">Problem Decomposer</span>
-              <TokenDisplay tokens={1} size="sm" className="ml-2" />
+              <TokenDisplay tokens={TOKEN_COST} size="sm" className="ml-2" />
             </div>
             <h1 className="text-4xl font-bold mb-4">
               Break It Down to <span className="gradient-text">Atomic Tasks</span>
@@ -157,6 +212,12 @@ export default function ProblemDecomposer() {
             <p className="text-muted-foreground">
               Each task ≤ 90 minutes. No vague verbs. Every task is measurable.
             </p>
+            {user && (
+              <div className="mt-4 inline-flex items-center gap-2 text-sm text-muted-foreground">
+                <Coins className="w-4 h-4" />
+                Your tokens: {tokens}
+              </div>
+            )}
           </div>
 
           <div className="max-w-3xl mx-auto">
@@ -183,7 +244,7 @@ export default function ProblemDecomposer() {
                 ) : (
                   <>
                     <Puzzle className="w-4 h-4" />
-                    Decompose Goal
+                    Decompose Goal ({TOKEN_COST} token)
                   </>
                 )}
               </Button>
@@ -273,8 +334,8 @@ export default function ProblemDecomposer() {
                   <Button variant="outline" className="flex-1" onClick={() => setPhases(null)}>
                     Decompose Another
                   </Button>
-                  <Button variant="hero" className="flex-1" asChild>
-                    <a href="/roadmap">Build Roadmap</a>
+                  <Button variant="hero" className="flex-1" onClick={handleBuildRoadmap}>
+                    Build Roadmap
                   </Button>
                 </div>
               </div>
