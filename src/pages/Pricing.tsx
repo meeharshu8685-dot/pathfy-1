@@ -5,6 +5,7 @@ import { Check, Zap, Star, Rocket, Loader2 } from "lucide-react";
 import { useRazorpay } from "@/hooks/useRazorpay";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { PromoCodeSection } from "@/components/pricing/PromoCodeSection";
 
 const plans = [
   {
@@ -193,6 +194,11 @@ export default function Pricing() {
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Promo Code Section */}
+            <div className="mt-8">
+              <PromoCodeSection />
             </div>
 
             {/* Bonus */}
