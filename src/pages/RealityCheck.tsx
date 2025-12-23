@@ -4,147 +4,144 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { StatusBadge } from "@/components/shared/StatusBadge";
-import { TokenDisplay } from "@/components/shared/TokenDisplay";
-import { Target, Zap, Clock, AlertTriangle, TrendingUp, Coins } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { Loader2, Target, Brain, Sparkles, Coins } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTokens } from "@/hooks/useTokens";
-import { toast } from "@/hooks/use-toast";
+import { TokenDisplay } from "@/components/shared/TokenDisplay";
+import { AdaptiveQuiz, QuizResults } from "@/components/reality-check/AdaptiveQuiz";
+import { AchievementPlan, AchievementPlanData } from "@/components/reality-check/AchievementPlan";
 
-interface CheckResult {
-  status: "realistic" | "risky" | "unrealistic";
-  requiredHours: number;
-  availableHours: number;
-  gap: number;
-  gapExplanation: string;
-  recommendations: string[];
-}
+const FIELDS = [
+  { value: "tech", label: "Technology & Software" },
+  { value: "exams", label: "Competitive Exams" },
+  { value: "business", label: "Business & Management" },
+  { value: "sports", label: "Sports & Fitness" },
+  { value: "arts", label: "Arts & Creative" },
+  { value: "govt", label: "Government Jobs" },
+  { value: "other", label: "Other" },
+];
 
-const TOKEN_COST = 1;
+const SKILL_LEVELS = [
+  { value: "beginner", label: "Beginner" },
+  { value: "intermediate", label: "Intermediate" },
+  { value: "advanced", label: "Advanced" },
+];
+
+type Step = "input" | "quiz" | "analyzing" | "result";
+
+const TOKEN_COST = 2;
 
 export default function RealityCheck() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { tokens, spendTokens, canAfford } = useTokens();
-  
+
+  const [step, setStep] = useState<Step>("input");
   const [goal, setGoal] = useState("");
-  const [skillLevel, setSkillLevel] = useState("");
-  const [hoursPerWeek, setHoursPerWeek] = useState("");
-  const [deadlineValue, setDeadlineValue] = useState("");
+  const [field, setField] = useState("tech");
+  const [skillLevel, setSkillLevel] = useState("beginner");
+  const [hoursPerWeek, setHoursPerWeek] = useState(10);
+  const [deadlineValue, setDeadlineValue] = useState(3);
   const [deadlineUnit, setDeadlineUnit] = useState<"weeks" | "months">("months");
-  const [result, setResult] = useState<CheckResult | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [quizResults, setQuizResults] = useState<QuizResults | null>(null);
+  const [result, setResult] = useState<AchievementPlanData | null>(null);
   const [savedGoalId, setSavedGoalId] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
-  const getDeadlineWeeks = () => {
-    const value = parseInt(deadlineValue) || 1;
-    return deadlineUnit === "months" ? value * 4 : value;
+  const deadlineWeeks = deadlineUnit === "months" ? deadlineValue * 4 : deadlineValue;
+
+  const handleStartQuiz = () => {
+    if (!goal.trim()) {
+      toast({ title: "Please enter a goal", variant: "destructive" });
+      return;
+    }
+    setStep("quiz");
   };
 
-  const getDeadlineDate = () => {
-    const weeks = getDeadlineWeeks();
-    const date = new Date();
-    date.setDate(date.getDate() + weeks * 7);
-    return date.toISOString().split("T")[0];
+  const handleQuizComplete = async (results: QuizResults) => {
+    setQuizResults(results);
+    await runAnalysis(results);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSkipQuiz = async () => {
+    await runAnalysis(null);
+  };
 
+  const runAnalysis = async (quiz: QuizResults | null) => {
     if (!user) {
-      toast({
-        title: "Login Required",
-        description: "Please login to use this feature",
-        variant: "destructive",
-      });
+      toast({ title: "Please sign in to continue", variant: "destructive" });
       navigate("/login");
       return;
     }
 
     if (!canAfford(TOKEN_COST)) {
-      toast({
-        title: "Insufficient Tokens",
-        description: `You need ${TOKEN_COST} token to use this feature. You have ${tokens} tokens.`,
-        variant: "destructive",
-      });
+      toast({ title: "Not enough tokens", description: `You need ${TOKEN_COST} tokens for analysis`, variant: "destructive" });
       return;
     }
 
-    setIsAnalyzing(true);
-    setResult(null);
+    setStep("analyzing");
 
     try {
-      // Call the AI edge function
       const { data, error } = await supabase.functions.invoke("analyze-goal", {
         body: {
-          type: "reality-check",
+          type: "reality-check-v2",
           goal,
+          field,
           skillLevel,
-          hoursPerWeek: parseInt(hoursPerWeek) || 10,
-          deadlineWeeks: getDeadlineWeeks(),
+          calibratedSkillLevel: quiz?.calibratedLevel || skillLevel,
+          hoursPerWeek,
+          deadlineWeeks,
+          quizResults: quiz,
         },
       });
 
       if (error) throw error;
 
-      const aiResult = data.result as CheckResult;
-      setResult(aiResult);
+      const analysisResult = data.result as AchievementPlanData;
+      setResult(analysisResult);
 
       // Spend tokens
-      await spendTokens.mutateAsync({
-        amount: TOKEN_COST,
-        feature: "reality-check",
-        description: `Reality check for: ${goal.substring(0, 50)}...`,
-      });
+      await spendTokens.mutateAsync({ amount: TOKEN_COST, feature: "reality-check", description: "Career Reality Check analysis" });
 
-      // Save goal to database
-      const { data: goalData, error: goalError } = await supabase
+      // Save to database
+      const { data: savedGoal, error: saveError } = await supabase
         .from("goals")
         .insert({
           user_id: user.id,
           title: goal,
           skill_level: skillLevel,
-          hours_per_week: parseInt(hoursPerWeek) || 10,
-          deadline: getDeadlineDate(),
-          estimated_hours: aiResult.requiredHours,
-          available_hours: aiResult.availableHours,
-          hour_gap: aiResult.gap,
-          feasibility_status: aiResult.status === "risky" ? "risky" : aiResult.status,
-          recommendations: aiResult.recommendations,
-          is_active: aiResult.status === "realistic",
+          hours_per_week: hoursPerWeek,
+          deadline: new Date(Date.now() + deadlineWeeks * 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+          feasibility_status: analysisResult.feasibilityStatus,
+          estimated_hours: analysisResult.requiredHours,
+          available_hours: analysisResult.effectiveAvailableHours,
+          hour_gap: analysisResult.requiredHours - analysisResult.effectiveAvailableHours,
+          recommendations: analysisResult.howToAchieve.topPriorityAreas as string[],
+          field,
+          quiz_results: quiz ? JSON.parse(JSON.stringify(quiz)) : null,
+          achievement_plan: JSON.parse(JSON.stringify(analysisResult)),
+          calibrated_skill_level: quiz?.calibratedLevel || null,
         })
         .select()
         .single();
 
-      if (goalError) {
-        console.error("Error saving goal:", goalError);
+      if (saveError) {
+        console.error("Save error:", saveError);
       } else {
-        setSavedGoalId(goalData.id);
+        setSavedGoalId(savedGoal.id);
       }
 
-      toast({
-        title: "Analysis Complete",
-        description: `Goal marked as ${aiResult.status}. ${TOKEN_COST} token spent.`,
-      });
-
-    } catch (error) {
-      console.error("Reality check error:", error);
-      toast({
-        title: "Analysis Failed",
-        description: error instanceof Error ? error.message : "Failed to analyze goal",
-        variant: "destructive",
-      });
-    } finally {
-      setIsAnalyzing(false);
+      setStep("result");
+      toast({ title: "Analysis complete" });
+    } catch (err) {
+      console.error("Analysis error:", err);
+      toast({ title: "Analysis failed", description: "Please try again", variant: "destructive" });
+      setStep("input");
     }
   };
 
@@ -156,91 +153,139 @@ export default function RealityCheck() {
     }
   };
 
+  const handleTryAnother = () => {
+    setStep("input");
+    setGoal("");
+    setResult(null);
+    setQuizResults(null);
+    setSavedGoalId(null);
+  };
+
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    setTimeout(() => {
+      toast({ title: "Blueprint download coming soon!" });
+      setIsDownloading(false);
+    }, 1000);
+  };
+
   return (
     <Layout>
-      <div className="py-12">
-        <div className="container mx-auto px-4">
-          {/* Header */}
-          <div className="max-w-3xl mx-auto text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary border border-border mb-6">
-              <Target className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium">Career Reality Check</span>
-              <TokenDisplay tokens={TOKEN_COST} size="sm" className="ml-2" />
-            </div>
-            <h1 className="text-4xl font-bold mb-4">
-              Is Your Goal <span className="gradient-text">Actually Achievable?</span>
-            </h1>
-            <p className="text-muted-foreground">
-              Enter your goal and constraints. We'll tell you if you're being realistic or delusional.
-            </p>
-            {user && (
-              <div className="mt-4 inline-flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="container max-w-3xl py-8 space-y-8">
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
+            <Target className="h-4 w-4" />
+            Career Reality Check
+          </div>
+          <h1 className="text-3xl font-bold">Achievement Planner</h1>
+          <p className="text-muted-foreground">
+            Get an honest, data-driven analysis of your career goals
+          </p>
+          {user && (
+            <div className="flex items-center justify-center gap-4 mt-4">
+              <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
                 <Coins className="w-4 h-4" />
                 Your tokens: {tokens}
               </div>
-            )}
-          </div>
+              <TokenDisplay tokens={TOKEN_COST} size="sm" />
+            </div>
+          )}
+        </div>
 
-          <div className="max-w-2xl mx-auto">
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-6 p-8 rounded-xl card-gradient border border-border mb-8">
+        {/* Step: Input Form */}
+        {step === "input" && (
+          <Card className="border-border/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Define Your Goal
+              </CardTitle>
+              <CardDescription>
+                Tell us about your career goal and we'll analyze its feasibility
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Goal Input */}
               <div className="space-y-2">
-                <Label htmlFor="goal">What's your goal?</Label>
-                <Textarea
+                <Label htmlFor="goal">Target Goal or Position</Label>
+                <Input
                   id="goal"
-                  placeholder="e.g., Become a Backend Engineer, Land a Data Science internship, Learn Machine Learning..."
+                  placeholder="e.g., Become a Full-Stack Developer, Clear UPSC, Launch a startup..."
                   value={goal}
                   onChange={(e) => setGoal(e.target.value)}
-                  className="min-h-[80px] bg-secondary/50"
-                  required
+                  className="text-base"
                 />
               </div>
 
+              {/* Field Selection */}
               <div className="space-y-2">
-                <Label htmlFor="skill-level">Current Skill Level</Label>
-                <Select value={skillLevel} onValueChange={setSkillLevel} required>
-                  <SelectTrigger className="bg-secondary/50">
-                    <SelectValue placeholder="Select your current level" />
+                <Label>Field</Label>
+                <Select value={field} onValueChange={setField}>
+                  <SelectTrigger>
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="complete-beginner">Complete Beginner (no coding experience)</SelectItem>
-                    <SelectItem value="beginner">Beginner (some basics, no projects)</SelectItem>
-                    <SelectItem value="intermediate">Intermediate (few projects, learning)</SelectItem>
-                    <SelectItem value="advanced">Advanced (working knowledge, needs depth)</SelectItem>
+                    {FIELDS.map((f) => (
+                      <SelectItem key={f.value} value={f.value}>
+                        {f.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
 
+              {/* Skill Level */}
               <div className="space-y-2">
-                <Label htmlFor="hours">Hours per Week</Label>
-                <Input
-                  id="hours"
-                  type="number"
-                  placeholder="e.g., 15"
-                  value={hoursPerWeek}
-                  onChange={(e) => setHoursPerWeek(e.target.value)}
-                  className="bg-secondary/50"
-                  min="1"
-                  max="60"
-                  required
-                />
+                <Label>Current Skill Level (Self-Assessment)</Label>
+                <Select value={skillLevel} onValueChange={setSkillLevel}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SKILL_LEVELS.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>
+                        {s.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
+              {/* Hours per Week */}
+              <div className="space-y-4">
+                <div className="flex justify-between">
+                  <Label>Available Hours per Week</Label>
+                  <span className="text-sm font-medium text-primary">{hoursPerWeek} hours</span>
+                </div>
+                <Slider
+                  value={[hoursPerWeek]}
+                  onValueChange={([v]) => setHoursPerWeek(v)}
+                  min={5}
+                  max={60}
+                  step={5}
+                  className="py-2"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>5 hrs</span>
+                  <span>60 hrs</span>
+                </div>
+              </div>
+
+              {/* Deadline */}
               <div className="space-y-2">
-                <Label>Target Deadline</Label>
-                <div className="grid grid-cols-2 gap-4">
+                <Label>Target Timeline</Label>
+                <div className="flex gap-3">
                   <Input
                     type="number"
-                    placeholder="e.g., 6"
+                    min={1}
+                    max={deadlineUnit === "months" ? 36 : 52}
                     value={deadlineValue}
-                    onChange={(e) => setDeadlineValue(e.target.value)}
-                    className="bg-secondary/50"
-                    min="1"
-                    max="52"
-                    required
+                    onChange={(e) => setDeadlineValue(parseInt(e.target.value) || 1)}
+                    className="w-24"
                   />
-                  <Select value={deadlineUnit} onValueChange={(v) => setDeadlineUnit(v as "weeks" | "months")}>
-                    <SelectTrigger className="bg-secondary/50">
+                  <Select value={deadlineUnit} onValueChange={(v: "weeks" | "months") => setDeadlineUnit(v)}>
+                    <SelectTrigger className="w-32">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -250,97 +295,52 @@ export default function RealityCheck() {
                   </Select>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {deadlineValue && `≈ ${getDeadlineWeeks()} weeks total`}
+                  ≈ {deadlineWeeks} weeks total ({Math.round(hoursPerWeek * deadlineWeeks)} hours available)
                 </p>
               </div>
 
-              <Button 
-                type="submit" 
-                variant="hero" 
-                className="w-full" 
-                disabled={isAnalyzing || !skillLevel}
-              >
-                {isAnalyzing ? (
-                  <>
-                    <Zap className="w-4 h-4 animate-pulse" />
-                    Analyzing Reality...
-                  </>
-                ) : (
-                  <>
-                    <Target className="w-4 h-4" />
-                    Check My Reality ({TOKEN_COST} token)
-                  </>
-                )}
+              <Button onClick={handleStartQuiz} className="w-full" size="lg" disabled={!goal.trim()}>
+                <Brain className="h-4 w-4 mr-2" />
+                Continue to Skill Quiz
               </Button>
-            </form>
 
-            {/* Result */}
-            {result && (
-              <div className="animate-slide-up space-y-6">
-                <div className="p-8 rounded-xl card-gradient border border-border">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold">Feasibility Analysis</h2>
-                    <StatusBadge status={result.status} />
-                  </div>
+              <p className="text-xs text-center text-muted-foreground">
+                Next: A short quiz to calibrate your actual skill level for more accurate analysis
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
-                  {/* Stats Grid */}
-                  <div className="grid grid-cols-3 gap-4 mb-6">
-                    <div className="p-4 rounded-lg bg-secondary/50 text-center">
-                      <Clock className="w-5 h-5 mx-auto mb-2 text-muted-foreground" />
-                      <div className="text-2xl font-bold">{result.requiredHours}</div>
-                      <div className="text-xs text-muted-foreground">Hours Required</div>
-                    </div>
-                    <div className="p-4 rounded-lg bg-secondary/50 text-center">
-                      <TrendingUp className="w-5 h-5 mx-auto mb-2 text-muted-foreground" />
-                      <div className="text-2xl font-bold">{result.availableHours}</div>
-                      <div className="text-xs text-muted-foreground">Hours Available</div>
-                    </div>
-                    <div className={`p-4 rounded-lg text-center ${result.gap >= 0 ? 'bg-success/10' : 'bg-destructive/10'}`}>
-                      <AlertTriangle className={`w-5 h-5 mx-auto mb-2 ${result.gap >= 0 ? 'text-success' : 'text-destructive'}`} />
-                      <div className={`text-2xl font-bold ${result.gap >= 0 ? 'text-success' : 'text-destructive'}`}>
-                        {result.gap > 0 ? '+' : ''}{result.gap}
-                      </div>
-                      <div className="text-xs text-muted-foreground">Hour Gap</div>
-                    </div>
-                  </div>
+        {/* Step: Adaptive Quiz */}
+        {step === "quiz" && (
+          <AdaptiveQuiz field={field} onComplete={handleQuizComplete} onSkip={handleSkipQuiz} />
+        )}
 
-                  {/* Explanation */}
-                  <div className="p-4 rounded-lg bg-secondary/30 mb-6">
-                    <h3 className="font-semibold mb-2">Gap Analysis</h3>
-                    <p className="text-sm text-muted-foreground">{result.gapExplanation}</p>
-                  </div>
-
-                  {/* Recommendations */}
-                  <div>
-                    <h3 className="font-semibold mb-3">Recommended Adjustments</h3>
-                    <ul className="space-y-2">
-                      {result.recommendations.map((rec, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                          <span className="text-primary mt-0.5">→</span>
-                          {rec}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <Button variant="outline" className="flex-1" onClick={() => {
-                    setResult(null);
-                    setSavedGoalId(null);
-                  }}>
-                    Try Another Goal
-                  </Button>
-                  {result.status !== "unrealistic" && (
-                    <Button variant="hero" className="flex-1" onClick={handleDecompose}>
-                      Decompose This Goal
-                    </Button>
-                  )}
-                </div>
+        {/* Step: Analyzing */}
+        {step === "analyzing" && (
+          <Card className="border-primary/20">
+            <CardContent className="py-16 text-center space-y-4">
+              <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+              <div>
+                <h3 className="text-lg font-semibold">Analyzing Your Goal</h3>
+                <p className="text-sm text-muted-foreground">
+                  Calculating feasibility with conservative estimates...
+                </p>
               </div>
-            )}
-          </div>
-        </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Step: Results */}
+        {step === "result" && result && (
+          <AchievementPlan
+            data={result}
+            onDecompose={handleDecompose}
+            onTryAnother={handleTryAnother}
+            onDownload={handleDownload}
+            isDownloading={isDownloading}
+          />
+        )}
       </div>
     </Layout>
   );
