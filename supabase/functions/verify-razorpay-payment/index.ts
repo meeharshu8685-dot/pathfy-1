@@ -24,7 +24,7 @@ serve(async (req) => {
 
   try {
     const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
-    
+
     if (!razorpayKeySecret) {
       throw new Error('Razorpay credentials not configured');
     }
@@ -38,12 +38,17 @@ serve(async (req) => {
     // Initialize Supabase clients
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    if (!supabaseServiceKey) {
+      console.error('CRITICAL: SUPABASE_SERVICE_ROLE_KEY is not configured as a secret');
+      throw new Error('Server configuration error: missing service key');
+    }
+
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
     });
-    
+
     // Service role client for updating tokens
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -53,9 +58,9 @@ serve(async (req) => {
       throw new Error('User not authenticated');
     }
 
-    const { 
-      razorpay_order_id, 
-      razorpay_payment_id, 
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
       razorpay_signature,
       tokens,
       planId,
@@ -74,13 +79,13 @@ serve(async (req) => {
       false,
       ["sign"]
     );
-    
+
     const signature = await crypto.subtle.sign(
       "HMAC",
       key,
       encoder.encode(body)
     );
-    
+
     const generatedSignature = Array.from(new Uint8Array(signature))
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
@@ -144,9 +149,9 @@ serve(async (req) => {
         newBalance: newBalance,
         paymentId: razorpay_payment_id,
       }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
+        status: 200
       }
     );
   } catch (error: unknown) {
@@ -154,9 +159,9 @@ serve(async (req) => {
     console.error('Error verifying payment:', error);
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400 
+        status: 400
       }
     );
   }

@@ -21,7 +21,7 @@ serve(async (req) => {
   try {
     const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID');
     const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
-    
+
     if (!razorpayKeyId || !razorpayKeySecret) {
       throw new Error('Razorpay credentials not configured');
     }
@@ -51,7 +51,8 @@ serve(async (req) => {
 
     // Create Razorpay order
     const credentials = btoa(`${razorpayKeyId}:${razorpayKeySecret}`);
-    
+    console.log('Sending request to Razorpay API...');
+
     const orderResponse = await fetch('https://api.razorpay.com/v1/orders', {
       method: 'POST',
       headers: {
@@ -72,12 +73,17 @@ serve(async (req) => {
 
     if (!orderResponse.ok) {
       const errorText = await orderResponse.text();
-      console.error('Razorpay API error:', errorText);
-      throw new Error(`Failed to create Razorpay order: ${errorText}`);
+      console.error('Razorpay API error response:', errorText);
+      try {
+        const errorJson = JSON.parse(errorText);
+        throw new Error(`Razorpay Error: ${errorJson.error?.description || errorJson.error?.reason || errorText}`);
+      } catch (e) {
+        throw new Error(`Failed to create Razorpay order: ${errorText}`);
+      }
     }
 
     const order = await orderResponse.json();
-    console.log('Razorpay order created:', order.id);
+    console.log('Razorpay order created successfully:', order.id);
 
     return new Response(
       JSON.stringify({
@@ -86,9 +92,9 @@ serve(async (req) => {
         currency: order.currency,
         keyId: razorpayKeyId,
       }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
+        status: 200
       }
     );
   } catch (error: unknown) {
@@ -96,9 +102,9 @@ serve(async (req) => {
     console.error('Error creating Razorpay order:', error);
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400 
+        status: 400
       }
     );
   }
