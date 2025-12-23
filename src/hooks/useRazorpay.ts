@@ -136,9 +136,10 @@ export function useRazorpay() {
           variant: "destructive",
         });
       });
-      
+
       razorpay.open();
     } catch (err: any) {
+      console.error("Detailed Payment Error:", err);
       toast({
         title: "Payment Error",
         description: err.message || "Something went wrong.",
