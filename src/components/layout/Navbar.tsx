@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Zap, Menu, X, User, LogOut } from "lucide-react";
+import { Zap, Menu, X, User, LogOut, Receipt } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
@@ -98,6 +98,12 @@ export function Navbar() {
                           <Link to="/pricing" className="flex items-center gap-2 cursor-pointer">
                             <Zap className="w-4 h-4" />
                             Get Tokens
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to="/payment-history" className="flex items-center gap-2 cursor-pointer">
+                            <Receipt className="w-4 h-4" />
+                            Payment History
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
