@@ -322,25 +322,20 @@ serve(async (req) => {
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
-
     const body: AnalyzeRequest = await req.json();
     const { type, goal, field, skillLevel, calibratedSkillLevel, hoursPerWeek, deadlineWeeks, availableMinutes, focusLevel, existingTasks, quizResults } = body;
 
     console.log(`Processing ${type} request for goal: ${goal?.substring(0, 50)}...`);
 
     let userPrompt = "";
-    
+
     switch (type) {
       case "reality-check-v2":
         const effectiveLevel = calibratedSkillLevel || skillLevel || "beginner";
         const totalWeeks = deadlineWeeks || 12;
         const weeklyHours = hoursPerWeek || 10;
         const rawAvailableHours = weeklyHours * totalWeeks;
-        
+
         userPrompt = `Analyze this career/learning goal for a student:
 
 GOAL: ${goal}
@@ -405,10 +400,10 @@ Write as if you've personally guided students through this path before.`;
 
       case "optimize":
         const recentTasks = existingTasks || [];
-        const taskContext = recentTasks.length > 0 
+        const taskContext = recentTasks.length > 0
           ? `CURRENT ROADMAP TASKS (prioritize these):\n${JSON.stringify(recentTasks, null, 2)}`
           : "No active roadmap tasks - suggest general review or foundational work";
-        
+
         userPrompt = `Decide what this student should do TODAY:
 
 AVAILABLE TIME: ${availableMinutes || 60} minutes
@@ -424,7 +419,6 @@ Based on their time (${availableMinutes || 60} min) and energy (${focusLevel || 
 - If energy < 30, suggest only light review or rest
 - Be calm, honest, and supportive`;
         break;
-        break;
 
       default:
         throw new Error(`Unknown analysis type: ${type}`);
@@ -432,52 +426,47 @@ Based on their time (${availableMinutes || 60} min) and energy (${focusLevel || 
 
     const systemPrompt = SYSTEM_PROMPTS[type];
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+
+    if (!GEMINI_API_KEY) {
+      throw new Error("GEMINI_API_KEY is not configured");
+    }
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
+        contents: [{
+          parts: [{
+            text: `${systemPrompt}\n\nUser Request:\n${userPrompt}`
+          }]
+        }],
+        generationConfig: {
+          response_mime_type: "application/json",
+        }
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("AI Gateway error:", response.status, errorText);
-      
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "AI credits exhausted. Please add credits to continue." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      
-      throw new Error(`AI Gateway error: ${response.status}`);
+      console.error("Gemini API error:", response.status, errorText);
+      throw new Error(`Gemini API error: ${response.status}`);
     }
 
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
-    
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
     if (!content) {
       throw new Error("No response from AI");
     }
 
     console.log("AI response received, parsing...");
 
-    // Extract JSON from response (handle markdown code blocks)
+    // Extract JSON from response (handle markdown code blocks if any, though response_mime_type should handle it)
     let jsonStr = content;
+
     const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (jsonMatch) {
       jsonStr = jsonMatch[1].trim();
@@ -486,7 +475,7 @@ Based on their time (${availableMinutes || 60} min) and energy (${focusLevel || 
     try {
       const result = JSON.parse(jsonStr);
       console.log(`Successfully parsed ${type} response`);
-      
+
       return new Response(
         JSON.stringify({ result, type }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
