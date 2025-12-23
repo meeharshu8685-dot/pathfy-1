@@ -6,17 +6,112 @@ const corsHeaders = {
 };
 
 interface AnalyzeRequest {
-  type: "reality-check" | "decompose" | "roadmap" | "optimize";
+  type: "reality-check" | "reality-check-v2" | "decompose" | "roadmap" | "optimize";
   goal: string;
+  field?: string;
   skillLevel?: string;
+  calibratedSkillLevel?: string;
   hoursPerWeek?: number;
   deadlineWeeks?: number;
   availableMinutes?: number;
   focusLevel?: number;
   existingTasks?: unknown[];
+  quizResults?: unknown;
 }
 
+const FIELD_EFFORT_TABLES = `
+CONSERVATIVE EFFORT TABLES BY FIELD (base hours for intermediate level):
+
+TECH:
+- Entry-level developer: 400-600 hours
+- Mid-level developer: 800-1200 hours
+- Senior developer: 1500-2000 hours
+- Data Science entry: 500-700 hours
+- Machine Learning: 800-1200 hours
+
+EXAMS:
+- Competitive exams (GATE, CAT): 800-1200 hours
+- Professional certifications: 200-400 hours
+- Government exams (UPSC): 2000-3000 hours
+
+BUSINESS:
+- MBA preparation: 400-600 hours
+- Startup basics: 300-500 hours
+- Management skills: 200-400 hours
+
+SPORTS:
+- Amateur competitive: 500-800 hours
+- Semi-professional: 1500-2500 hours
+- Elite level: 3000+ hours
+
+ARTS/CREATIVE:
+- Portfolio-ready: 300-500 hours
+- Professional level: 800-1200 hours
+- Expert level: 1500-2500 hours
+
+GOVERNMENT:
+- Entry-level positions: 600-1000 hours
+- Mid-level positions: 1000-1500 hours
+
+SKILL LEVEL MULTIPLIERS:
+- beginner: 1.4x
+- intermediate: 1.0x
+- advanced: 0.7x
+
+REAL-LIFE REDUCTION: Apply 0.7 factor to available hours (30% lost to life circumstances)
+`;
+
 const SYSTEM_PROMPTS = {
+  "reality-check-v2": `You are a strict, honest career advisor for students. Your job is to validate if a goal is achievable and provide a comprehensive achievement plan.
+
+${FIELD_EFFORT_TABLES}
+
+ANALYSIS RULES:
+1. Use CONSERVATIVE estimates always
+2. Apply the 0.7 real-life reduction factor to available hours
+3. If effective hours < 70% of required, mark as "unrealistic"
+4. If effective hours are 70-90% of required, mark as "risky"
+5. Only mark as "realistic" if buffer exists
+6. NEVER encourage impossible timelines
+7. This system MUST be able to say NO
+
+OUTPUT RULES:
+- Never show 100% for skill fit projections (cap at 92%)
+- Never guarantee success
+- Provide calm, neutral explanations
+- Only ONE motivational line, field-specific, no hype
+
+Return a JSON object with EXACTLY this structure:
+{
+  "feasibilityStatus": "realistic" | "risky" | "unrealistic",
+  "requiredHours": number,
+  "effectiveAvailableHours": number,
+  "explanation": "neutral, clear 2-3 sentence explanation without motivational fluff",
+  "howToAchieve": {
+    "minimumWeeklyCommitment": number,
+    "recommendedWeeklyCommitment": number,
+    "topPriorityAreas": ["area1", "area2", "area3", "area4", "area5"],
+    "timeToGoal": {
+      "minimum": "X months",
+      "average": "Y months",
+      "safe": "Z months"
+    },
+    "skillFitProjection": {
+      "currentFit": number (0-100),
+      "expectedFit": number (0-92, never 100)
+    },
+    "alternativePositions": {
+      "lowerAdjacent": { "title": "position name", "description": "brief description" },
+      "higherGrowth": { "title": "position name", "description": "brief description" }
+    },
+    "recommendedResources": [
+      { "title": "resource name", "type": "book|video|course|article|community", "reason": "why this helps" }
+    ],
+    "healthyAdvice": "2-3 sentences of calm, realistic, supportive guidance",
+    "motivationalLine": "exactly one field-specific, non-hype motivational line"
+  }
+}`,
+
   "reality-check": `You are a strict career advisor for students. Your job is to validate if a goal is achievable.
 
 RULES:
@@ -137,13 +232,39 @@ serve(async (req) => {
     }
 
     const body: AnalyzeRequest = await req.json();
-    const { type, goal, skillLevel, hoursPerWeek, deadlineWeeks, availableMinutes, focusLevel, existingTasks } = body;
+    const { type, goal, field, skillLevel, calibratedSkillLevel, hoursPerWeek, deadlineWeeks, availableMinutes, focusLevel, existingTasks, quizResults } = body;
 
     console.log(`Processing ${type} request for goal: ${goal?.substring(0, 50)}...`);
 
     let userPrompt = "";
     
     switch (type) {
+      case "reality-check-v2":
+        const effectiveLevel = calibratedSkillLevel || skillLevel || "beginner";
+        const totalWeeks = deadlineWeeks || 12;
+        const weeklyHours = hoursPerWeek || 10;
+        const rawAvailableHours = weeklyHours * totalWeeks;
+        
+        userPrompt = `Analyze this career/learning goal for a student:
+
+GOAL: ${goal}
+FIELD: ${field || "other"}
+SKILL LEVEL (self-declared): ${skillLevel || "beginner"}
+CALIBRATED SKILL LEVEL (from quiz): ${effectiveLevel}
+${quizResults ? `QUIZ CONFIDENCE: ${JSON.stringify(quizResults)}` : ""}
+
+AVAILABLE TIME:
+- Hours per week: ${weeklyHours}
+- Timeline: ${totalWeeks} weeks
+- Raw available hours: ${rawAvailableHours}
+- After 0.7 real-life reduction: ${Math.round(rawAvailableHours * 0.7)} effective hours
+
+Provide a comprehensive, HONEST assessment. Use the effort tables for the "${field || "other"}" field.
+Apply the skill level multiplier to required hours.
+This feature MUST be able to say NO if the goal is unrealistic.
+Provide exactly 3-5 recommended resources.`;
+        break;
+
       case "reality-check":
         const availableHours = (hoursPerWeek || 10) * (deadlineWeeks || 12);
         userPrompt = `Analyze this goal for feasibility:
@@ -198,7 +319,6 @@ Suggest what to do RIGHT NOW. Maximum 3 tasks. Be realistic about what can be do
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        temperature: 0.7,
       }),
     });
 

@@ -58,7 +58,9 @@ export type Database = {
       }
       goals: {
         Row: {
+          achievement_plan: Json | null
           available_hours: number | null
+          calibrated_skill_level: string | null
           created_at: string
           deadline: string
           description: string | null
@@ -66,10 +68,12 @@ export type Database = {
           feasibility_status:
             | Database["public"]["Enums"]["feasibility_status"]
             | null
+          field: string | null
           hour_gap: number | null
           hours_per_week: number
           id: string
           is_active: boolean
+          quiz_results: Json | null
           recommendations: Json | null
           skill_level: string
           title: string
@@ -77,7 +81,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          achievement_plan?: Json | null
           available_hours?: number | null
+          calibrated_skill_level?: string | null
           created_at?: string
           deadline: string
           description?: string | null
@@ -85,10 +91,12 @@ export type Database = {
           feasibility_status?:
             | Database["public"]["Enums"]["feasibility_status"]
             | null
+          field?: string | null
           hour_gap?: number | null
           hours_per_week: number
           id?: string
           is_active?: boolean
+          quiz_results?: Json | null
           recommendations?: Json | null
           skill_level: string
           title: string
@@ -96,7 +104,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          achievement_plan?: Json | null
           available_hours?: number | null
+          calibrated_skill_level?: string | null
           created_at?: string
           deadline?: string
           description?: string | null
@@ -104,10 +114,12 @@ export type Database = {
           feasibility_status?:
             | Database["public"]["Enums"]["feasibility_status"]
             | null
+          field?: string | null
           hour_gap?: number | null
           hours_per_week?: number
           id?: string
           is_active?: boolean
+          quiz_results?: Json | null
           recommendations?: Json | null
           skill_level?: string
           title?: string
