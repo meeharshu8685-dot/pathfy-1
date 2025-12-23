@@ -40,8 +40,12 @@ const statusConfig: Record<Status, { label: string; className: string }> = {
 };
 
 export const StatusBadge = React.forwardRef<HTMLSpanElement, StatusBadgeProps>(
-  ({ status, className }, ref) => {
+  function StatusBadge({ status, className }, ref) {
     const config = statusConfig[status];
+
+    if (!config) {
+      return null;
+    }
 
     return (
       <span
@@ -57,5 +61,3 @@ export const StatusBadge = React.forwardRef<HTMLSpanElement, StatusBadgeProps>(
     );
   }
 );
-
-StatusBadge.displayName = "StatusBadge";
