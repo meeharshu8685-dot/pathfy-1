@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Loader2, Target, Brain, Sparkles, Coins } from "lucide-react";
+import { Loader2, Target, Brain, Sparkles, Coins, History } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,6 +15,8 @@ import { useTokens } from "@/hooks/useTokens";
 import { TokenDisplay } from "@/components/shared/TokenDisplay";
 import { AdaptiveQuiz, QuizResults } from "@/components/reality-check/AdaptiveQuiz";
 import { AchievementPlan, AchievementPlanData } from "@/components/reality-check/AchievementPlan";
+import { GoalHistory } from "@/components/reality-check/GoalHistory";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const FIELDS = [
   { value: "tech", label: "Technology & Software" },
@@ -111,6 +113,7 @@ const SKILL_LEVELS = [
 
 type Step = "input" | "quiz" | "analyzing" | "result";
 type GoalInputMode = "select" | "manual";
+type ActiveTab = "new" | "history";
 
 const TOKEN_COST = 1;
 
@@ -120,6 +123,7 @@ export default function RealityCheck() {
   const { tokens, spendTokens, canAfford } = useTokens();
 
   const [step, setStep] = useState<Step>("input");
+  const [activeTab, setActiveTab] = useState<ActiveTab>("new");
   const [goal, setGoal] = useState("");
   const [selectedGoal, setSelectedGoal] = useState("");
   const [goalInputMode, setGoalInputMode] = useState<GoalInputMode>("select");
@@ -301,20 +305,39 @@ export default function RealityCheck() {
           )}
         </div>
 
-        {/* Step: Input Form */}
-        {step === "input" && (
-          <Card className="border-border/50 animate-slide-up" variant="glass">
-            <CardHeader className="pb-4 sm:pb-6">
-              <CardTitle className="flex items-center gap-2 text-lg sm:text-2xl">
-                <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                Define Your Goal
-              </CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
-                Tell us about your career goal and we'll analyze its feasibility
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5 sm:space-y-6">
-              {/* Field Selection - First */}
+        {/* Tabs for New Analysis vs History */}
+        {step === "input" && user && (
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ActiveTab)} className="animate-fade-in">
+            <TabsList className="grid w-full grid-cols-2 h-11 sm:h-12 rounded-xl bg-secondary/50 p-1">
+              <TabsTrigger 
+                value="new" 
+                className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm font-medium"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                New Analysis
+              </TabsTrigger>
+              <TabsTrigger 
+                value="history" 
+                className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm font-medium"
+              >
+                <History className="h-4 w-4 mr-2" />
+                History
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="new" className="mt-4 sm:mt-6">
+              <Card className="border-border/50" variant="glass">
+                <CardHeader className="pb-4 sm:pb-6">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-2xl">
+                    <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                    Define Your Goal
+                  </CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">
+                    Tell us about your career goal and we'll analyze its feasibility
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-5 sm:space-y-6">
+                  {/* Field Selection - First */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Field</Label>
                 <Select value={field} onValueChange={handleFieldChange}>
@@ -497,12 +520,39 @@ export default function RealityCheck() {
               </p>
             </CardContent>
           </Card>
-        )}
+        </TabsContent>
 
-        {/* Step: Adaptive Quiz */}
-        {step === "quiz" && (
-          <AdaptiveQuiz field={field} onComplete={handleQuizComplete} onSkip={handleSkipQuiz} />
-        )}
+        <TabsContent value="history" className="mt-4 sm:mt-6">
+          <GoalHistory />
+        </TabsContent>
+      </Tabs>
+    )}
+
+    {/* Step: Input Form for non-logged in users */}
+    {step === "input" && !user && (
+      <Card className="border-border/50 animate-slide-up" variant="glass">
+        <CardHeader className="pb-4 sm:pb-6">
+          <CardTitle className="flex items-center gap-2 text-lg sm:text-2xl">
+            <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            Define Your Goal
+          </CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
+            Sign in to save your analysis and view history
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="text-center py-8">
+          <p className="text-muted-foreground mb-4">Please sign in to use the Achievement Planner</p>
+          <Button variant="hero" onClick={() => navigate("/login")}>
+            Sign In to Continue
+          </Button>
+        </CardContent>
+      </Card>
+    )}
+
+    {/* Step: Adaptive Quiz */}
+    {step === "quiz" && (
+      <AdaptiveQuiz field={field} onComplete={handleQuizComplete} onSkip={handleSkipQuiz} />
+    )}
 
         {/* Step: Analyzing */}
         {step === "analyzing" && (
