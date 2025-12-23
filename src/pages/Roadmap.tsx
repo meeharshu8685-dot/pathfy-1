@@ -31,7 +31,7 @@ interface MentorRoadmap {
   closingMotivation: string;
 }
 
-const TOKEN_COST = 3;
+const TOKEN_COST = 2;
 
 export default function Roadmap() {
   const navigate = useNavigate();

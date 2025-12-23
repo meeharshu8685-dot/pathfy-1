@@ -44,7 +44,7 @@ interface OptimizerResult {
   suggestRest?: boolean;
 }
 
-const TOKEN_COST = 1;
+const TOKEN_COST = 0; // Free feature
 
 export default function StudyOptimizer() {
   const navigate = useNavigate();
@@ -105,14 +105,7 @@ export default function StudyOptimizer() {
       return;
     }
 
-    if (!canAfford(TOKEN_COST)) {
-      toast({
-        title: "Insufficient Tokens",
-        description: `You need ${TOKEN_COST} token. You have ${tokens} tokens.`,
-        variant: "destructive",
-      });
-      return;
-    }
+    // Daily Optimizer is free - no token check needed
 
     setIsOptimizing(true);
     setResult(null);
@@ -157,11 +150,7 @@ export default function StudyOptimizer() {
       const aiResult = data.result as OptimizerResult;
       setResult(aiResult);
 
-      await spendTokens.mutateAsync({
-        amount: TOKEN_COST,
-        feature: "daily-optimizer",
-        description: `Daily plan: ${availableTime}min, ${getEnergyLabel(energyLevel[0])} energy`,
-      });
+      // Daily Optimizer is free - no token spending
 
       // Save daily plan
       const today = new Date().toISOString().split("T")[0];
@@ -267,7 +256,7 @@ export default function StudyOptimizer() {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary border border-border mb-6">
               <Clock className="w-4 h-4 text-primary" />
               <span className="text-sm font-medium">Daily Optimizer</span>
-              <TokenDisplay tokens={TOKEN_COST} size="sm" className="ml-2" />
+              <span className="text-xs px-2 py-0.5 rounded-full bg-success/10 text-success border border-success/30 ml-2">Free</span>
             </div>
             <h1 className="text-4xl font-bold mb-4">
               What Should You Do <span className="gradient-text">Today?</span>
@@ -354,7 +343,7 @@ export default function StudyOptimizer() {
                 ) : (
                   <>
                     <Clock className="w-4 h-4" />
-                    What Should I Do? ({TOKEN_COST} token)
+                    What Should I Do Today?
                   </>
                 )}
               </Button>
