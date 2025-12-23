@@ -156,20 +156,47 @@ RULES:
 - Tasks must respect prerequisites (order matters)
 - Include time estimates for each micro-task
 
-Return a JSON array of phases:
-[{
-  "id": "1",
-  "name": "Phase 1: Foundations",
-  "tasks": [{
-    "id": "1-1",
-    "title": "Task title with action verb",
-    "microTasks": [{
-      "id": "1-1-1",
-      "title": "Micro task with measurable outcome",
-      "estimatedMinutes": 45
+Return a JSON object with this structure:
+{
+  "phases": [{
+    "id": "1",
+    "name": "Phase 1: Foundations",
+    "tasks": [{
+      "id": "1-1",
+      "title": "Task title with action verb",
+      "microTasks": [{
+        "id": "1-1-1",
+        "title": "Micro task with measurable outcome",
+        "estimatedMinutes": 45
+      }]
     }]
-  }]
-}]`,
+  }],
+  "totalHours": number (total estimated hours for all tasks),
+  "motivation": "2-3 lines of positive but realistic encouragement, no hype or guarantees",
+  "careerPositions": {
+    "lower": {
+      "title": "Lower adjacent position name",
+      "description": "Brief description of this role",
+      "salaryRange": "$XX,XXX - $XX,XXX",
+      "marketDemand": "low" | "medium" | "high" | "very-high",
+      "difficulty": "easy" | "moderate" | "challenging" | "hard"
+    },
+    "target": {
+      "title": "The target goal position",
+      "description": "Brief description of this role",
+      "salaryRange": "$XX,XXX - $XX,XXX",
+      "marketDemand": "low" | "medium" | "high" | "very-high",
+      "difficulty": "easy" | "moderate" | "challenging" | "hard"
+    },
+    "higher": {
+      "title": "Higher growth position name",
+      "description": "Brief description of this role",
+      "salaryRange": "$XX,XXX - $XX,XXX",
+      "marketDemand": "low" | "medium" | "high" | "very-high",
+      "difficulty": "easy" | "moderate" | "challenging" | "hard"
+    }
+  }
+}`,
 
   "roadmap": `You are a roadmap builder that creates dependency-aware learning paths.
 
