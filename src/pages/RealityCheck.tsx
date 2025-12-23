@@ -112,7 +112,7 @@ const SKILL_LEVELS = [
 type Step = "input" | "quiz" | "analyzing" | "result";
 type GoalInputMode = "select" | "manual";
 
-const TOKEN_COST = 2;
+const TOKEN_COST = 1;
 
 export default function RealityCheck() {
   const navigate = useNavigate();
