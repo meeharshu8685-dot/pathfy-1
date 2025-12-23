@@ -6,7 +6,7 @@ const corsHeaders = {
 };
 
 interface AnalyzeRequest {
-  type: "reality-check" | "reality-check-v2" | "decompose" | "roadmap" | "optimize";
+  type: "reality-check" | "reality-check-v2" | "decompose" | "roadmap" | "roadmap-v2" | "optimize";
   goal: string;
   field?: string;
   skillLevel?: string;
@@ -218,6 +218,48 @@ Return a JSON array:
   "milestone": "optional milestone name"
 }]`,
 
+  "roadmap-v2": `You are a senior mentor writing a personalized, phase-based roadmap for a student or early-career learner.
+
+${FIELD_EFFORT_TABLES}
+
+TONE & STYLE RULES:
+- Write like a senior mentor guiding a student
+- Calm, honest, supportive tone
+- No hype, no guarantees, no pressure
+- If progress will be slow, say it clearly but positively
+- Always keep the roadmap achievable
+
+ROADMAP STRUCTURE RULES:
+- Create EXACTLY 6-9 sequential phases
+- Each phase must have: goal, timeEstimate, whatToLearn (core concepts only), whatToDo (hands-on actions/projects), outcome (skill/confidence gained)
+- Time estimates should be ranges based on user's weekly commitment
+- DO NOT create daily schedules
+- DO NOT overpromise outcomes
+- DO NOT use generic advice
+
+PERSONALIZATION RULES:
+- Reference the user's specific time commitment in phases
+- Reference their goal and field specifically
+- Make it feel written for THIS user, not a template
+
+Return a JSON object with EXACTLY this structure:
+{
+  "phases": [
+    {
+      "phaseNumber": 1,
+      "phaseName": "Phase name",
+      "goal": "What capability this phase builds",
+      "timeEstimate": "X-Y weeks (based on user's weekly hours)",
+      "whatToLearn": ["concept 1", "concept 2", "concept 3"],
+      "whatToDo": ["hands-on action 1", "project 2", "practice 3"],
+      "outcome": "What confidence or skill the user gains"
+    }
+  ],
+  "whatToIgnore": ["distraction 1", "low-value activity 2", "thing to avoid 3"],
+  "finalRealityCheck": "Honest 2-3 sentence explanation of what progress looks like with this time commitment",
+  "closingMotivation": "2-3 lines max of positive, grounded encouragement - no hustle language"
+}`,
+
   "optimize": `You are a study session optimizer. Decide what the student should do TODAY.
 
 RULES:
@@ -317,6 +359,21 @@ Goal: ${goal}
 
 Create 8-15 sequential steps with proper dependencies. Include 3-4 milestones.
 First step is unlocked, all others are locked until prerequisites complete.`;
+        break;
+
+      case "roadmap-v2":
+        userPrompt = `Create a mentor-written, phase-based roadmap for this student:
+
+GOAL: ${goal}
+FIELD: ${field || "general"}
+SKILL LEVEL: ${skillLevel || "beginner"}
+WEEKLY TIME COMMITMENT: ${hoursPerWeek || 10} hours per week
+TARGET DURATION: ${deadlineWeeks || 12} weeks
+
+Create 6-9 sequential phases that feel realistic and achievable.
+Reference their ${hoursPerWeek || 10} hours/week commitment in time estimates.
+Be honest about what can be achieved in ${deadlineWeeks || 12} weeks.
+Write as if you've personally guided students through this path before.`;
         break;
 
       case "optimize":
