@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const navLinks = [
-  { href: "/reality-check", label: "Reality Check" },
+  { href: "/reality-check", label: "Path Feasibility" },
   { href: "/problem-decomposer", label: "Decomposer" },
   { href: "/roadmap", label: "Roadmap" },
   { href: "/study-optimizer", label: "Optimizer" },
@@ -38,7 +38,7 @@ export function Navbar() {
               <Zap className="w-5 h-5 text-white" />
             </div>
             <span className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
-              ExecuteAI
+              Pathly
             </span>
           </Link>
 

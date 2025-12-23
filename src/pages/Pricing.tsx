@@ -11,7 +11,7 @@ const plans = [
     description: "Get started with basic execution tools",
     features: [
       "5 free tokens/month",
-      "Reality Check",
+      "Path Feasibility",
       "Problem Decomposer",
       "Basic Roadmap",
       "Study Optimizer",
@@ -59,7 +59,7 @@ const plans = [
 ];
 
 const tokenCosts = [
-  { feature: "Reality Check", cost: 1 },
+  { feature: "Path Feasibility", cost: 1 },
   { feature: "Problem Decomposer", cost: 1 },
   { feature: "Roadmap Builder", cost: 2 },
   { feature: "Study Optimizer", cost: 1 },

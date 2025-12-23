@@ -284,7 +284,7 @@ export default function RealityCheck() {
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
             <Target className="h-4 w-4" />
-            Career Reality Check
+            Path Feasibility
           </div>
           <h1 className="text-3xl font-bold">Achievement Planner</h1>
           <p className="text-muted-foreground">
