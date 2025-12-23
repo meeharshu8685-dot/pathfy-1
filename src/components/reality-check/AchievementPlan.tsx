@@ -75,11 +75,11 @@ const statusConfig = {
   },
   unrealistic: {
     icon: XCircle,
-    color: "text-destructive",
-    bg: "bg-destructive/10",
-    border: "border-destructive/30",
-    badge: "bg-destructive text-destructive-foreground",
-    label: "Unrealistic Goal",
+    color: "text-amber-600",
+    bg: "bg-amber-50",
+    border: "border-amber-200",
+    badge: "bg-amber-100 text-amber-800",
+    label: "Needs Adjustment",
   },
 };
 

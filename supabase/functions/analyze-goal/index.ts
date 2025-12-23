@@ -73,13 +73,14 @@ ANALYSIS RULES:
 3. If effective hours < 70% of required, mark as "unrealistic"
 4. If effective hours are 70-90% of required, mark as "risky"
 5. Only mark as "realistic" if buffer exists
-6. NEVER encourage impossible timelines
-7. This system MUST be able to say NO
+6. Be honest but supportive - guide users toward achievable paths
+7. When goals need adjustment, frame it as an opportunity to find a better path
 
 OUTPUT RULES:
 - Never show 100% for skill fit projections (cap at 92%)
 - Never guarantee success
-- Provide calm, neutral explanations
+- Provide warm, supportive explanations - even for unrealistic goals, be encouraging about finding a better path
+- For unrealistic goals: Frame as "this timeline needs adjustment" not "this is impossible". Suggest extending timeline or adjusting scope positively.
 - Only ONE motivational line, field-specific, no hype
 
 Return a JSON object with EXACTLY this structure:
@@ -87,7 +88,7 @@ Return a JSON object with EXACTLY this structure:
   "feasibilityStatus": "realistic" | "risky" | "unrealistic",
   "requiredHours": number,
   "effectiveAvailableHours": number,
-  "explanation": "neutral, clear 2-3 sentence explanation without motivational fluff",
+  "explanation": "warm, supportive 2-3 sentence explanation. For unrealistic goals, acknowledge the ambition positively and gently suggest timeline extension or scope adjustment as an opportunity rather than a failure",
   "howToAchieve": {
     "minimumWeeklyCommitment": number,
     "recommendedWeeklyCommitment": number,
