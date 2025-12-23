@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-type Status = "realistic" | "warning" | "unrealistic" | "locked" | "unlocked" | "completed";
+type Status = "realistic" | "warning" | "risky" | "unrealistic" | "locked" | "unlocked" | "completed";
 
 interface StatusBadgeProps {
   status: Status;
@@ -14,6 +14,10 @@ const statusConfig: Record<Status, { label: string; className: string }> = {
   },
   warning: {
     label: "⚠️ Warning",
+    className: "bg-warning/20 text-warning border-warning/30",
+  },
+  risky: {
+    label: "⚠️ Risky",
     className: "bg-warning/20 text-warning border-warning/30",
   },
   unrealistic: {
