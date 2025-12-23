@@ -1,12 +1,16 @@
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { TokenDisplay } from "@/components/shared/TokenDisplay";
-import { Check, Zap, Star, Rocket } from "lucide-react";
+import { Check, Zap, Star, Rocket, Loader2 } from "lucide-react";
+import { useRazorpay } from "@/hooks/useRazorpay";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const plans = [
   {
+    id: "starter",
     name: "Starter",
-    price: "Free",
+    price: 0,
     tokens: 5,
     description: "Get started with basic execution tools",
     features: [
@@ -19,42 +23,45 @@ const plans = [
     cta: "Get Started",
     variant: "outline" as const,
     popular: false,
+    isPaid: false,
   },
   {
+    id: "pro",
     name: "Pro",
-    price: "$12",
-    period: "/month",
+    price: 299,
     tokens: 50,
     description: "For serious students and professionals",
     features: [
-      "50 tokens/month",
+      "50 tokens",
       "All Starter features",
       "Advanced Roadmaps",
       "Consistency Tracking",
       "Failure Detection",
       "Priority Support",
     ],
-    cta: "Start Pro Trial",
+    cta: "Buy Pro",
     variant: "hero" as const,
     popular: true,
+    isPaid: true,
   },
   {
+    id: "team",
     name: "Team",
-    price: "$29",
-    period: "/month",
+    price: 799,
     tokens: 200,
     description: "For study groups and bootcamps",
     features: [
-      "200 tokens/month",
+      "200 tokens",
       "All Pro features",
       "Team Dashboard",
       "Progress Sharing",
       "Admin Controls",
       "Slack Integration",
     ],
-    cta: "Contact Sales",
+    cta: "Buy Team",
     variant: "outline" as const,
     popular: false,
+    isPaid: true,
   },
 ];
 
@@ -67,6 +74,28 @@ const tokenCosts = [
 ];
 
 export default function Pricing() {
+  const { initiatePayment, isProcessing } = useRazorpay();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handlePlanClick = (plan: typeof plans[0]) => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    if (plan.isPaid) {
+      initiatePayment({
+        id: plan.id,
+        name: plan.name,
+        price: plan.price,
+        tokens: plan.tokens,
+      });
+    } else {
+      navigate("/dashboard");
+    }
+  };
+
   return (
     <Layout>
       <div className="py-12">
@@ -107,8 +136,14 @@ export default function Pricing() {
                 <div className="text-center mb-6">
                   <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
                   <div className="mb-2">
-                    <span className="text-4xl font-bold">{plan.price}</span>
-                    {plan.period && <span className="text-muted-foreground">{plan.period}</span>}
+                    {plan.price === 0 ? (
+                      <span className="text-4xl font-bold">Free</span>
+                    ) : (
+                      <>
+                        <span className="text-4xl font-bold">₹{plan.price}</span>
+                        <span className="text-muted-foreground"> one-time</span>
+                      </>
+                    )}
                   </div>
                   <TokenDisplay tokens={plan.tokens} size="sm" />
                   <p className="text-sm text-muted-foreground mt-3">{plan.description}</p>
@@ -123,8 +158,20 @@ export default function Pricing() {
                   ))}
                 </ul>
 
-                <Button variant={plan.variant} className="w-full">
-                  {plan.cta}
+                <Button 
+                  variant={plan.variant} 
+                  className="w-full"
+                  onClick={() => handlePlanClick(plan)}
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    plan.cta
+                  )}
                 </Button>
               </div>
             ))}
