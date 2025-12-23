@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Zap, Menu, X, User, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +25,10 @@ export function Navbar() {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, signOut, isLoading } = useAuth();
+  const { profile } = useProfile();
+
+  const displayName = profile?.display_name || profile?.full_name || user?.email?.split("@")[0] || "User";
+  const getInitials = () => displayName.charAt(0).toUpperCase();
 
   const handleSignOut = async () => {
     await signOut();
@@ -70,9 +76,14 @@ export function Navbar() {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm" className="gap-2">
-                          <User className="w-4 h-4" />
+                          <Avatar className="w-6 h-6">
+                            <AvatarImage src={profile?.avatar_url || undefined} alt="Profile" />
+                            <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                              {getInitials()}
+                            </AvatarFallback>
+                          </Avatar>
                           <span className="max-w-[100px] truncate">
-                            {user.email?.split("@")[0]}
+                            {displayName}
                           </span>
                         </Button>
                       </DropdownMenuTrigger>

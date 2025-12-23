@@ -13,6 +13,7 @@ import { GoalManagement } from "@/components/profile/GoalManagement";
 import { DataReset } from "@/components/profile/DataReset";
 import { AccountDeletion } from "@/components/profile/AccountDeletion";
 import { ReassessmentReminder } from "@/components/profile/ReassessmentReminder";
+import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { 
   User, 
   Award, 
@@ -93,8 +94,8 @@ export default function Profile() {
                 <div className="space-y-6">
                   {/* Profile Card */}
                   <div className="p-6 rounded-xl card-gradient border border-border text-center">
-                    <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                      <User className="w-10 h-10 text-primary" />
+                    <div className="mx-auto mb-4 flex justify-center">
+                      <AvatarUpload size="lg" editable={true} />
                     </div>
                     {isLoading ? (
                       <>
