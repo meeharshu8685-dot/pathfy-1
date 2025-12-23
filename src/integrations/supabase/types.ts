@@ -177,14 +177,24 @@ export type Database = {
       }
       profiles: {
         Row: {
+          available_hours_per_week: number | null
           avatar_url: string | null
           completed_goals: number
+          country: string | null
           created_at: string
           current_streak: number
+          display_name: string | null
+          education_level: string | null
           email: string | null
           full_name: string | null
           id: string
+          last_reassessment_date: string | null
           longest_streak: number
+          preferred_study_time: string | null
+          primary_commitment: string | null
+          reassessment_reminder_days: number | null
+          reassessment_reminder_enabled: boolean | null
+          stream: string | null
           tokens: number
           total_goals: number
           total_hours_logged: number
@@ -192,14 +202,24 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          available_hours_per_week?: number | null
           avatar_url?: string | null
           completed_goals?: number
+          country?: string | null
           created_at?: string
           current_streak?: number
+          display_name?: string | null
+          education_level?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
+          last_reassessment_date?: string | null
           longest_streak?: number
+          preferred_study_time?: string | null
+          primary_commitment?: string | null
+          reassessment_reminder_days?: number | null
+          reassessment_reminder_enabled?: boolean | null
+          stream?: string | null
           tokens?: number
           total_goals?: number
           total_hours_logged?: number
@@ -207,14 +227,24 @@ export type Database = {
           user_id: string
         }
         Update: {
+          available_hours_per_week?: number | null
           avatar_url?: string | null
           completed_goals?: number
+          country?: string | null
           created_at?: string
           current_streak?: number
+          display_name?: string | null
+          education_level?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
+          last_reassessment_date?: string | null
           longest_streak?: number
+          preferred_study_time?: string | null
+          primary_commitment?: string | null
+          reassessment_reminder_days?: number | null
+          reassessment_reminder_enabled?: boolean | null
+          stream?: string | null
           tokens?: number
           total_goals?: number
           total_hours_logged?: number
