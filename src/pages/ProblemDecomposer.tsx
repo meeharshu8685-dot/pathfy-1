@@ -15,6 +15,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTokens } from "@/hooks/useTokens";
 import { toast } from "@/hooks/use-toast";
+import { CommitmentWarning } from "@/components/decomposer/CommitmentWarning";
+import { MotivationSection } from "@/components/decomposer/MotivationSection";
+import { DirectionAlternatives, CareerPosition } from "@/components/decomposer/DirectionAlternatives";
 
 interface MicroTask {
   id: string;
@@ -34,7 +37,19 @@ interface Phase {
   tasks: Task[];
 }
 
+interface DecomposeResult {
+  phases: Phase[];
+  totalHours: number;
+  motivation: string;
+  careerPositions: {
+    lower: CareerPosition;
+    target: CareerPosition;
+    higher: CareerPosition;
+  };
+}
+
 const TOKEN_COST = 1;
+const DEFAULT_WEEKLY_HOURS = 15;
 
 export default function ProblemDecomposer() {
   const navigate = useNavigate();
@@ -44,7 +59,7 @@ export default function ProblemDecomposer() {
 
   const [goal, setGoal] = useState("");
   const [goalId, setGoalId] = useState<string | null>(null);
-  const [phases, setPhases] = useState<Phase[] | null>(null);
+  const [result, setResult] = useState<DecomposeResult | null>(null);
   const [isDecomposing, setIsDecomposing] = useState(false);
   const [expandedPhases, setExpandedPhases] = useState<string[]>([]);
   const [expandedTasks, setExpandedTasks] = useState<string[]>([]);
@@ -79,7 +94,7 @@ export default function ProblemDecomposer() {
     }
 
     setIsDecomposing(true);
-    setPhases(null);
+    setResult(null);
 
     try {
       const { data, error } = await supabase.functions.invoke("analyze-goal", {
@@ -91,9 +106,32 @@ export default function ProblemDecomposer() {
 
       if (error) throw error;
 
-      const aiPhases = data.result as Phase[];
-      setPhases(aiPhases);
-      setExpandedPhases([aiPhases[0]?.id || "1"]);
+      // Handle both old array format and new object format
+      let decomposeResult: DecomposeResult;
+      if (Array.isArray(data.result)) {
+        // Legacy format - wrap in new structure
+        const phases = data.result as Phase[];
+        const totalMinutes = phases.reduce(
+          (acc, p) => acc + p.tasks.reduce(
+            (a, t) => a + t.microTasks.reduce((m, mt) => m + mt.estimatedMinutes, 0), 0
+          ), 0
+        );
+        decomposeResult = {
+          phases,
+          totalHours: Math.ceil(totalMinutes / 60),
+          motivation: "",
+          careerPositions: {
+            lower: { title: "Entry Level", description: "Starting position in this field", salaryRange: "$40,000 - $60,000", marketDemand: "high", difficulty: "easy" },
+            target: { title: goal, description: "Your target goal", salaryRange: "$60,000 - $90,000", marketDemand: "high", difficulty: "moderate" },
+            higher: { title: "Senior Level", description: "Advanced position with more responsibility", salaryRange: "$90,000 - $140,000", marketDemand: "medium", difficulty: "challenging" },
+          }
+        };
+      } else {
+        decomposeResult = data.result as DecomposeResult;
+      }
+
+      setResult(decomposeResult);
+      setExpandedPhases([decomposeResult.phases[0]?.id || "1"]);
 
       await spendTokens.mutateAsync({
         amount: TOKEN_COST,
@@ -106,7 +144,7 @@ export default function ProblemDecomposer() {
         let phaseNumber = 1;
         let orderIndex = 0;
 
-        for (const phase of aiPhases) {
+        for (const phase of decomposeResult.phases) {
           for (const task of phase.tasks) {
             const totalMinutes = task.microTasks.reduce((sum, mt) => sum + mt.estimatedMinutes, 0);
             
@@ -148,7 +186,7 @@ export default function ProblemDecomposer() {
 
       toast({
         title: "Decomposition Complete",
-        description: `Created ${aiPhases.length} phases with ${aiPhases.reduce((acc, p) => acc + p.tasks.length, 0)} tasks.`,
+        description: `Created ${decomposeResult.phases.length} phases with ${decomposeResult.phases.reduce((acc, p) => acc + p.tasks.length, 0)} tasks.`,
       });
 
     } catch (error) {
@@ -194,6 +232,16 @@ export default function ProblemDecomposer() {
       navigate(`/roadmap?goal=${encodeURIComponent(goal)}`);
     }
   };
+
+  const handleSelectAlternativeGoal = (position: CareerPosition) => {
+    navigate(`/reality-check?goal=${encodeURIComponent(position.title)}`);
+  };
+
+  // Calculate commitment metrics
+  const totalHours = result?.totalHours || 0;
+  const weeklyHours = DEFAULT_WEEKLY_HOURS;
+  const totalWeeks = Math.ceil(totalHours / weeklyHours);
+  const dailyMinutes = (weeklyHours * 60) / 7;
 
   return (
     <Layout>
@@ -251,87 +299,118 @@ export default function ProblemDecomposer() {
             </form>
 
             {/* Results */}
-            {phases && (
-              <div className="space-y-4 animate-slide-up">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold">Execution Plan</h2>
-                  <div className="text-sm text-muted-foreground">
-                    {phases.length} phases · {phases.reduce((acc, p) => acc + p.tasks.length, 0)} tasks
-                  </div>
-                </div>
+            {result && (
+              <div className="space-y-6 animate-slide-up">
+                {/* Commitment Warning */}
+                <CommitmentWarning
+                  totalHours={totalHours}
+                  weeklyHours={weeklyHours}
+                  totalWeeks={totalWeeks}
+                  dailyMinutes={dailyMinutes}
+                />
 
-                {phases.map((phase) => (
-                  <Collapsible
-                    key={phase.id}
-                    open={expandedPhases.includes(phase.id)}
-                    onOpenChange={() => togglePhase(phase.id)}
-                  >
-                    <CollapsibleTrigger asChild>
-                      <div className="p-4 rounded-xl bg-card border border-border hover:border-primary/50 cursor-pointer transition-colors">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            {expandedPhases.includes(phase.id) ? (
-                              <ChevronDown className="w-5 h-5 text-primary" />
-                            ) : (
-                              <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                            )}
-                            <span className="font-semibold">{phase.name}</span>
-                          </div>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span>{phase.tasks.length} tasks</span>
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-4 h-4" />
-                              {Math.round(getTotalTime(phase) / 60)}h
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="mt-2 ml-4 space-y-2">
-                      {phase.tasks.map((task) => (
-                        <Collapsible
-                          key={task.id}
-                          open={expandedTasks.includes(task.id)}
-                          onOpenChange={() => toggleTask(task.id)}
-                        >
-                          <CollapsibleTrigger asChild>
-                            <div className="p-3 rounded-lg bg-secondary/50 hover:bg-secondary cursor-pointer transition-colors">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  {expandedTasks.includes(task.id) ? (
-                                    <ChevronDown className="w-4 h-4 text-primary" />
-                                  ) : (
-                                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                                  )}
-                                  <span className="text-sm font-medium">{task.title}</span>
-                                </div>
-                                <span className="text-xs text-muted-foreground">
-                                  {task.microTasks.length} micro-tasks
+                {/* Motivation Section */}
+                {result.motivation && (
+                  <MotivationSection goal={goal} message={result.motivation} />
+                )}
+
+                {/* Execution Plan */}
+                <div className="p-6 rounded-xl card-gradient border border-border">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold">Execution Plan</h2>
+                    <div className="text-sm text-muted-foreground">
+                      {result.phases.length} phases · {result.phases.reduce((acc, p) => acc + p.tasks.length, 0)} tasks
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    {result.phases.map((phase) => (
+                      <Collapsible
+                        key={phase.id}
+                        open={expandedPhases.includes(phase.id)}
+                        onOpenChange={() => togglePhase(phase.id)}
+                      >
+                        <CollapsibleTrigger asChild>
+                          <div className="p-4 rounded-xl bg-card border border-border hover:border-primary/50 cursor-pointer transition-colors">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                {expandedPhases.includes(phase.id) ? (
+                                  <ChevronDown className="w-5 h-5 text-primary" />
+                                ) : (
+                                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                                )}
+                                <span className="font-semibold">{phase.name}</span>
+                              </div>
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                <span>{phase.tasks.length} tasks</span>
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-4 h-4" />
+                                  {Math.round(getTotalTime(phase) / 60)}h
                                 </span>
                               </div>
                             </div>
-                          </CollapsibleTrigger>
-                          <CollapsibleContent className="mt-1 ml-6 space-y-1">
-                            {task.microTasks.map((mt) => (
-                              <div
-                                key={mt.id}
-                                className="p-2 rounded-md bg-muted/30 flex items-center justify-between text-sm"
-                              >
-                                <span className="text-muted-foreground">{mt.title}</span>
-                                <span className="text-xs font-mono text-primary">
-                                  {mt.estimatedMinutes}m
-                                </span>
-                              </div>
-                            ))}
-                          </CollapsibleContent>
-                        </Collapsible>
-                      ))}
-                    </CollapsibleContent>
-                  </Collapsible>
-                ))}
+                          </div>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="mt-2 ml-4 space-y-2">
+                          {phase.tasks.map((task) => (
+                            <Collapsible
+                              key={task.id}
+                              open={expandedTasks.includes(task.id)}
+                              onOpenChange={() => toggleTask(task.id)}
+                            >
+                              <CollapsibleTrigger asChild>
+                                <div className="p-3 rounded-lg bg-secondary/50 hover:bg-secondary cursor-pointer transition-colors">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      {expandedTasks.includes(task.id) ? (
+                                        <ChevronDown className="w-4 h-4 text-primary" />
+                                      ) : (
+                                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                                      )}
+                                      <span className="text-sm font-medium">{task.title}</span>
+                                    </div>
+                                    <span className="text-xs text-muted-foreground">
+                                      {task.microTasks.length} micro-tasks
+                                    </span>
+                                  </div>
+                                </div>
+                              </CollapsibleTrigger>
+                              <CollapsibleContent className="mt-1 ml-6 space-y-1">
+                                {task.microTasks.map((mt) => (
+                                  <div
+                                    key={mt.id}
+                                    className="p-2 rounded-md bg-muted/30 flex items-center justify-between text-sm"
+                                  >
+                                    <span className="text-muted-foreground">{mt.title}</span>
+                                    <span className="text-xs font-mono text-primary">
+                                      {mt.estimatedMinutes}m
+                                    </span>
+                                  </div>
+                                ))}
+                              </CollapsibleContent>
+                            </Collapsible>
+                          ))}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Direction & Alternatives */}
+                {result.careerPositions && (
+                  <div className="p-6 rounded-xl card-gradient border border-border">
+                    <DirectionAlternatives
+                      currentGoal={goal}
+                      lowerPosition={result.careerPositions.lower}
+                      targetPosition={result.careerPositions.target}
+                      higherPosition={result.careerPositions.higher}
+                      onSelectGoal={handleSelectAlternativeGoal}
+                    />
+                  </div>
+                )}
 
                 <div className="flex gap-4 mt-8">
-                  <Button variant="outline" className="flex-1" onClick={() => setPhases(null)}>
+                  <Button variant="outline" className="flex-1" onClick={() => setResult(null)}>
                     Decompose Another
                   </Button>
                   <Button variant="hero" className="flex-1" onClick={handleBuildRoadmap}>
