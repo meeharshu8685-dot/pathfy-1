@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { TokenDisplay } from "@/components/shared/TokenDisplay";
-import { Target, Zap, Clock, AlertTriangle, TrendingUp } from "lucide-react";
+import { Target, Zap, Clock, AlertTriangle, TrendingUp, Coins } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -14,9 +15,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTokens } from "@/hooks/useTokens";
+import { toast } from "@/hooks/use-toast";
 
 interface CheckResult {
-  status: "realistic" | "warning" | "unrealistic";
+  status: "realistic" | "risky" | "unrealistic";
   requiredHours: number;
   availableHours: number;
   gap: number;
@@ -24,70 +29,131 @@ interface CheckResult {
   recommendations: string[];
 }
 
-const mockResults: Record<string, CheckResult> = {
-  unrealistic: {
-    status: "unrealistic",
-    requiredHours: 900,
-    availableHours: 240,
-    gap: -660,
-    gapExplanation: "You're 660 hours short. Backend Engineering requires mastering HTTP, APIs, databases, authentication, deployment, and cloud infrastructure. At 10 hrs/week for 6 months, you have 240 hours available.",
-    recommendations: [
-      "Extend timeline to 18 months OR",
-      "Narrow scope to 'API Development with Python' only",
-      "Consider focusing on one tech stack (e.g., Node.js + PostgreSQL)",
-      "Drop deployment/DevOps for now, focus on core backend skills",
-    ],
-  },
-  warning: {
-    status: "warning",
-    requiredHours: 400,
-    availableHours: 480,
-    gap: 80,
-    gapExplanation: "You have 80 hours buffer, which is tight. Any unexpected delays (sickness, work, life) will put you behind. Consider reducing scope or extending timeline by 1 month.",
-    recommendations: [
-      "Add 4-week buffer to your timeline",
-      "Prioritize hands-on projects over passive learning",
-      "Skip advanced topics until core skills are solid",
-    ],
-  },
-  realistic: {
-    status: "realistic",
-    requiredHours: 300,
-    availableHours: 520,
-    gap: 220,
-    gapExplanation: "You have a 220-hour buffer. This is healthy and accounts for unexpected delays. Your goal is achievable with consistent execution.",
-    recommendations: [
-      "Add one portfolio project to stand out",
-      "Allocate 20% of time for interview prep",
-      "Consider starting networking activities in parallel",
-    ],
-  },
-};
+const TOKEN_COST = 1;
 
 export default function RealityCheck() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { tokens, spendTokens, canAfford } = useTokens();
+  
   const [goal, setGoal] = useState("");
   const [skillLevel, setSkillLevel] = useState("");
   const [hoursPerWeek, setHoursPerWeek] = useState("");
-  const [deadline, setDeadline] = useState("");
+  const [deadlineValue, setDeadlineValue] = useState("");
+  const [deadlineUnit, setDeadlineUnit] = useState<"weeks" | "months">("months");
   const [result, setResult] = useState<CheckResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [savedGoalId, setSavedGoalId] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const getDeadlineWeeks = () => {
+    const value = parseInt(deadlineValue) || 1;
+    return deadlineUnit === "months" ? value * 4 : value;
+  };
+
+  const getDeadlineDate = () => {
+    const weeks = getDeadlineWeeks();
+    const date = new Date();
+    date.setDate(date.getDate() + weeks * 7);
+    return date.toISOString().split("T")[0];
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsAnalyzing(true);
 
-    // Simulate AI analysis
-    setTimeout(() => {
-      const hours = parseInt(hoursPerWeek) || 10;
-      if (hours <= 10) {
-        setResult(mockResults.unrealistic);
-      } else if (hours <= 15) {
-        setResult(mockResults.warning);
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please login to use this feature",
+        variant: "destructive",
+      });
+      navigate("/login");
+      return;
+    }
+
+    if (!canAfford(TOKEN_COST)) {
+      toast({
+        title: "Insufficient Tokens",
+        description: `You need ${TOKEN_COST} token to use this feature. You have ${tokens} tokens.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAnalyzing(true);
+    setResult(null);
+
+    try {
+      // Call the AI edge function
+      const { data, error } = await supabase.functions.invoke("analyze-goal", {
+        body: {
+          type: "reality-check",
+          goal,
+          skillLevel,
+          hoursPerWeek: parseInt(hoursPerWeek) || 10,
+          deadlineWeeks: getDeadlineWeeks(),
+        },
+      });
+
+      if (error) throw error;
+
+      const aiResult = data.result as CheckResult;
+      setResult(aiResult);
+
+      // Spend tokens
+      await spendTokens.mutateAsync({
+        amount: TOKEN_COST,
+        feature: "reality-check",
+        description: `Reality check for: ${goal.substring(0, 50)}...`,
+      });
+
+      // Save goal to database
+      const { data: goalData, error: goalError } = await supabase
+        .from("goals")
+        .insert({
+          user_id: user.id,
+          title: goal,
+          skill_level: skillLevel,
+          hours_per_week: parseInt(hoursPerWeek) || 10,
+          deadline: getDeadlineDate(),
+          estimated_hours: aiResult.requiredHours,
+          available_hours: aiResult.availableHours,
+          hour_gap: aiResult.gap,
+          feasibility_status: aiResult.status === "risky" ? "risky" : aiResult.status,
+          recommendations: aiResult.recommendations,
+          is_active: aiResult.status === "realistic",
+        })
+        .select()
+        .single();
+
+      if (goalError) {
+        console.error("Error saving goal:", goalError);
       } else {
-        setResult(mockResults.realistic);
+        setSavedGoalId(goalData.id);
       }
+
+      toast({
+        title: "Analysis Complete",
+        description: `Goal marked as ${aiResult.status}. ${TOKEN_COST} token spent.`,
+      });
+
+    } catch (error) {
+      console.error("Reality check error:", error);
+      toast({
+        title: "Analysis Failed",
+        description: error instanceof Error ? error.message : "Failed to analyze goal",
+        variant: "destructive",
+      });
+    } finally {
       setIsAnalyzing(false);
-    }, 1500);
+    }
+  };
+
+  const handleDecompose = () => {
+    if (savedGoalId) {
+      navigate(`/problem-decomposer?goalId=${savedGoalId}&goal=${encodeURIComponent(goal)}`);
+    } else {
+      navigate(`/problem-decomposer?goal=${encodeURIComponent(goal)}`);
+    }
   };
 
   return (
@@ -99,7 +165,7 @@ export default function RealityCheck() {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary border border-border mb-6">
               <Target className="w-4 h-4 text-primary" />
               <span className="text-sm font-medium">Career Reality Check</span>
-              <TokenDisplay tokens={1} size="sm" className="ml-2" />
+              <TokenDisplay tokens={TOKEN_COST} size="sm" className="ml-2" />
             </div>
             <h1 className="text-4xl font-bold mb-4">
               Is Your Goal <span className="gradient-text">Actually Achievable?</span>
@@ -107,6 +173,12 @@ export default function RealityCheck() {
             <p className="text-muted-foreground">
               Enter your goal and constraints. We'll tell you if you're being realistic or delusional.
             </p>
+            {user && (
+              <div className="mt-4 inline-flex items-center gap-2 text-sm text-muted-foreground">
+                <Coins className="w-4 h-4" />
+                Your tokens: {tokens}
+              </div>
+            )}
           </div>
 
           <div className="max-w-2xl mx-auto">
@@ -139,35 +211,55 @@ export default function RealityCheck() {
                 </Select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="hours">Hours per Week</Label>
-                  <Input
-                    id="hours"
-                    type="number"
-                    placeholder="e.g., 15"
-                    value={hoursPerWeek}
-                    onChange={(e) => setHoursPerWeek(e.target.value)}
-                    className="bg-secondary/50"
-                    min="1"
-                    max="60"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="deadline">Target Deadline</Label>
-                  <Input
-                    id="deadline"
-                    type="date"
-                    value={deadline}
-                    onChange={(e) => setDeadline(e.target.value)}
-                    className="bg-secondary/50"
-                    required
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="hours">Hours per Week</Label>
+                <Input
+                  id="hours"
+                  type="number"
+                  placeholder="e.g., 15"
+                  value={hoursPerWeek}
+                  onChange={(e) => setHoursPerWeek(e.target.value)}
+                  className="bg-secondary/50"
+                  min="1"
+                  max="60"
+                  required
+                />
               </div>
 
-              <Button type="submit" variant="hero" className="w-full" disabled={isAnalyzing}>
+              <div className="space-y-2">
+                <Label>Target Deadline</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <Input
+                    type="number"
+                    placeholder="e.g., 6"
+                    value={deadlineValue}
+                    onChange={(e) => setDeadlineValue(e.target.value)}
+                    className="bg-secondary/50"
+                    min="1"
+                    max="52"
+                    required
+                  />
+                  <Select value={deadlineUnit} onValueChange={(v) => setDeadlineUnit(v as "weeks" | "months")}>
+                    <SelectTrigger className="bg-secondary/50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="weeks">Weeks</SelectItem>
+                      <SelectItem value="months">Months</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {deadlineValue && `≈ ${getDeadlineWeeks()} weeks total`}
+                </p>
+              </div>
+
+              <Button 
+                type="submit" 
+                variant="hero" 
+                className="w-full" 
+                disabled={isAnalyzing || !skillLevel}
+              >
                 {isAnalyzing ? (
                   <>
                     <Zap className="w-4 h-4 animate-pulse" />
@@ -176,7 +268,7 @@ export default function RealityCheck() {
                 ) : (
                   <>
                     <Target className="w-4 h-4" />
-                    Check My Reality
+                    Check My Reality ({TOKEN_COST} token)
                   </>
                 )}
               </Button>
@@ -233,12 +325,17 @@ export default function RealityCheck() {
                 </div>
 
                 <div className="flex gap-4">
-                  <Button variant="outline" className="flex-1" onClick={() => setResult(null)}>
+                  <Button variant="outline" className="flex-1" onClick={() => {
+                    setResult(null);
+                    setSavedGoalId(null);
+                  }}>
                     Try Another Goal
                   </Button>
-                  <Button variant="hero" className="flex-1" asChild>
-                    <a href="/problem-decomposer">Decompose This Goal</a>
-                  </Button>
+                  {result.status !== "unrealistic" && (
+                    <Button variant="hero" className="flex-1" onClick={handleDecompose}>
+                      Decompose This Goal
+                    </Button>
+                  )}
                 </div>
               </div>
             )}
