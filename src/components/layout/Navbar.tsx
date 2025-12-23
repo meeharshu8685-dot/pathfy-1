@@ -1,7 +1,15 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Zap, Menu, X } from "lucide-react";
+import { Zap, Menu, X, User, LogOut } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const navLinks = [
   { href: "/reality-check", label: "Reality Check" },
@@ -12,7 +20,14 @@ const navLinks = [
 
 export function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, signOut, isLoading } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 glass">
@@ -43,16 +58,61 @@ export function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
-            <Link to="/dashboard">
-              <Button variant="outline" size="sm">
-                Dashboard
-              </Button>
-            </Link>
-            <Link to="/pricing">
-              <Button variant="hero" size="sm">
-                Get Tokens
-              </Button>
-            </Link>
+            {!isLoading && (
+              <>
+                {user ? (
+                  <>
+                    <Link to="/dashboard">
+                      <Button variant="outline" size="sm">
+                        Dashboard
+                      </Button>
+                    </Link>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="gap-2">
+                          <User className="w-4 h-4" />
+                          <span className="max-w-[100px] truncate">
+                            {user.email?.split("@")[0]}
+                          </span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
+                            <User className="w-4 h-4" />
+                            Profile
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to="/pricing" className="flex items-center gap-2 cursor-pointer">
+                            <Zap className="w-4 h-4" />
+                            Get Tokens
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
+                          <LogOut className="w-4 h-4 mr-2" />
+                          Sign Out
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/login">
+                      <Button variant="ghost" size="sm">
+                        Sign In
+                      </Button>
+                    </Link>
+                    <Link to="/signup">
+                      <Button variant="hero" size="sm">
+                        Get Started
+                      </Button>
+                    </Link>
+                  </>
+                )}
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -83,16 +143,37 @@ export function Navbar() {
                 </Link>
               ))}
               <div className="border-t border-border my-2" />
-              <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
-                <Button variant="outline" className="w-full">
-                  Dashboard
-                </Button>
-              </Link>
-              <Link to="/pricing" onClick={() => setMobileOpen(false)}>
-                <Button variant="hero" className="w-full">
-                  Get Tokens
-                </Button>
-              </Link>
+              {user ? (
+                <>
+                  <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
+                    <Button variant="outline" className="w-full">
+                      Dashboard
+                    </Button>
+                  </Link>
+                  <Link to="/profile" onClick={() => setMobileOpen(false)}>
+                    <Button variant="ghost" className="w-full">
+                      Profile
+                    </Button>
+                  </Link>
+                  <Button variant="ghost" className="w-full justify-start" onClick={() => { handleSignOut(); setMobileOpen(false); }}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" onClick={() => setMobileOpen(false)}>
+                    <Button variant="outline" className="w-full">
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link to="/signup" onClick={() => setMobileOpen(false)}>
+                    <Button variant="hero" className="w-full">
+                      Get Started
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         )}
