@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { DualScrollPicker } from "@/components/ui/scroll-picker";
 import { Loader2, Target, Brain, Sparkles, Coins } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -443,16 +442,28 @@ export default function RealityCheck() {
               </div>
 
               {/* Deadline */}
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <Label>Target Timeline</Label>
-                <DualScrollPicker
-                  numberValue={deadlineValue}
-                  unitValue={deadlineUnit}
-                  onNumberChange={(v) => setDeadlineValue(v)}
-                  onUnitChange={(v) => setDeadlineUnit(v as "weeks" | "months")}
-                  numberRange={{ min: 1, max: deadlineUnit === "months" ? 36 : 52 }}
-                />
-                <p className="text-xs text-muted-foreground text-center">
+                <div className="flex gap-3">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={deadlineUnit === "months" ? 36 : 52}
+                    value={deadlineValue}
+                    onChange={(e) => setDeadlineValue(parseInt(e.target.value) || 1)}
+                    className="w-24 bg-background"
+                  />
+                  <Select value={deadlineUnit} onValueChange={(v: "weeks" | "months") => setDeadlineUnit(v)}>
+                    <SelectTrigger className="w-32 bg-background">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border border-border z-50">
+                      <SelectItem value="weeks">Weeks</SelectItem>
+                      <SelectItem value="months">Months</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <p className="text-xs text-muted-foreground">
                   ≈ {deadlineWeeks} weeks total ({Math.round(hoursPerWeek * deadlineWeeks)} hours available)
                 </p>
               </div>
