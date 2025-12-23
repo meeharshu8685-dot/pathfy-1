@@ -444,20 +444,20 @@ export default function RealityCheck() {
               {/* Deadline */}
               <div className="space-y-2">
                 <Label>Target Timeline</Label>
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <Input
                     type="number"
                     min={1}
                     max={deadlineUnit === "months" ? 36 : 52}
                     value={deadlineValue}
                     onChange={(e) => setDeadlineValue(parseInt(e.target.value) || 1)}
-                    className="w-24 bg-background"
+                    className="w-full sm:w-28"
                   />
                   <Select value={deadlineUnit} onValueChange={(v: "weeks" | "months") => setDeadlineUnit(v)}>
-                    <SelectTrigger className="w-32 bg-background">
+                    <SelectTrigger className="w-full sm:w-36">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-popover border border-border z-50">
+                    <SelectContent>
                       <SelectItem value="weeks">Weeks</SelectItem>
                       <SelectItem value="months">Months</SelectItem>
                     </SelectContent>
