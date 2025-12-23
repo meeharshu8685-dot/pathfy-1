@@ -38,10 +38,10 @@ serve(async (req) => {
     // Initialize Supabase clients
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const supabaseServiceKey = Deno.env.get('SB_SERVICE_ROLE_KEY');
 
     if (!supabaseServiceKey) {
-      console.error('CRITICAL: SUPABASE_SERVICE_ROLE_KEY is not configured as a secret');
+      console.error('CRITICAL: SB_SERVICE_ROLE_KEY is not configured as a secret');
       throw new Error('Server configuration error: missing service key');
     }
 
