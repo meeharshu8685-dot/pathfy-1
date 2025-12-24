@@ -16,7 +16,7 @@ export default function GoalApproachPlanner() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const { user } = useAuth();
-    const { goals, refetch } = useGoals();
+    const { goals, updateGoal } = useGoals();
 
     const [selectedApproachId, setSelectedApproachId] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
@@ -68,15 +68,11 @@ export default function GoalApproachPlanner() {
         setIsSaving(true);
 
         try {
-            // Save selected approach to the goal
-            const { error } = await supabase
-                .from("goals")
-                .update({ selected_approach_id: selectedApproachId })
-                .eq("id", currentGoal.id);
-
-            if (error) throw error;
-
-            await refetch();
+            // Save selected approach to the goal using mutation
+            await updateGoal.mutateAsync({
+                id: currentGoal.id,
+                selected_approach_id: selectedApproachId
+            });
 
             toast({
                 title: "Approach Selected",
