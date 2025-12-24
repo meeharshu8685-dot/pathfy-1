@@ -27,7 +27,74 @@ Deno.serve(async (req) => {
 
     if (type === 'reality-check-v2') {
       const { field, skillLevel, calibratedSkillLevel, hoursPerWeek, deadlineWeeks } = body;
-      prompt += `Analyze feasibility for a ${skillLevel} in ${field}. 
+
+      // Check if this is a competitive exam
+      const isCompetitiveExam = field === 'exams' || field === 'govt';
+      const deadlineMonths = Math.round(deadlineWeeks / 4);
+
+      if (isCompetitiveExam) {
+        // Special prompt for competitive exams - shows preparation paths, not pass/fail
+        prompt += `You are an expert career advisor familiar with Indian coaching institute preparation models.
+Goal: ${goal}
+User's current level: ${calibratedSkillLevel || skillLevel}
+Available time: ${hoursPerWeek} hours/week for ${deadlineMonths} months
+
+CRITICAL RULES:
+1. NEVER use words like "unrealistic", "impossible", or "guaranteed"
+2. ALWAYS present preparation as CHOICES (paths), not verdicts
+3. Use coaching institute terminology that Indian students recognize
+4. Show trade-offs clearly (time, effort, lifestyle, burnout risk)
+
+For competitive exams, evaluate using these models:
+- If timeline <= 12 months: "Drop-Year / Full-Focus Preparation" (8-10 hrs/day, very high lifestyle trade-off)
+- If timeline >= 24 months: "Long-Term / Sustainable Preparation" (5-6 hrs/day, moderate trade-off)
+- If timeline is 12-24 months: Show BOTH paths and explain trade-offs
+
+Return JSON ONLY:
+{
+  "feasibilityStatus": "achievable_with_conditions",
+  "preparationApproach": "${deadlineMonths <= 12 ? 'drop_year' : deadlineMonths >= 24 ? 'long_term' : 'flexible'}",
+  "requiredHours": number,
+  "effectiveAvailableHours": number,
+  "explanation": "Start with reassurance. Explain this is achievable under specific conditions. Use coaching terminology.",
+  "preparationPaths": [
+    {
+      "pathName": "Drop-Year / Full-Focus Program",
+      "duration": "10-12 months",
+      "dailyStudyHours": "8-10 hours",
+      "lifestyleTradeOff": "Very High - minimal entertainment, focused routine",
+      "burnoutRisk": "High - requires mental resilience",
+      "whoThisSuits": "Students who can dedicate full time without other commitments",
+      "fitStatus": "achievable_with_commitment|needs_adjustment|high_pressure"
+    },
+    {
+      "pathName": "Long-Term / Foundation Program", 
+      "duration": "24-36 months",
+      "dailyStudyHours": "5-6 hours",
+      "lifestyleTradeOff": "Moderate - balanced with other activities",
+      "burnoutRisk": "Lower - sustainable pace",
+      "whoThisSuits": "Students starting early or preferring steady progress",
+      "fitStatus": "good_fit|achievable_with_commitment"
+    }
+  ],
+  "howToAchieve": {
+    "minimumWeeklyCommitment": number,
+    "recommendedWeeklyCommitment": number,
+    "topPriorityAreas": ["string"],
+    "timeToGoal": { "minimum": "string", "average": "string", "safe": "string" },
+    "skillFitProjection": { "currentFit": number, "expectedFit": number },
+    "alternativePositions": {
+      "lowerAdjacent": { "title": "string", "description": "string" },
+      "higherGrowth": { "title": "string", "description": "string" }
+    },
+    "recommendedResources": [{ "title": "string", "type": "string", "reason": "string" }],
+    "healthyAdvice": "Advice about mental health, breaks, and sustainable preparation",
+    "motivationalLine": "End with: Choose the model that fits your life, not just your ambition."
+  }
+}`;
+      } else {
+        // Original logic for non-exam goals (tech, skills, careers)
+        prompt += `Analyze feasibility for a ${skillLevel} in ${field}. 
 Available: ${hoursPerWeek}h/week for ${deadlineWeeks} weeks.
 Return JSON ONLY:
 {
@@ -50,6 +117,7 @@ Return JSON ONLY:
     "motivationalLine": "string"
   }
 }`;
+      }
     } else if (type === 'decompose') {
       prompt += `Break this goal into atomic tasks (each < 90 mins). 
 Return JSON ONLY:

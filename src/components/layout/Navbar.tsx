@@ -15,7 +15,7 @@ import {
 
 const navLinks = [
   { href: "/reality-check", label: "Path Feasibility" },
-  { href: "/problem-decomposer", label: "Decomposer" },
+  { href: "/approach-planner", label: "Approach Planner" },
   { href: "/roadmap", label: "Roadmap" },
   { href: "/roadmap-history", label: "History" },
   { href: "/study-optimizer", label: "Optimizer" },

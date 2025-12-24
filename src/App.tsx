@@ -2,13 +2,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import RealityCheck from "./pages/RealityCheck";
-import ProblemDecomposer from "./pages/ProblemDecomposer";
+import GoalApproachPlanner from "./pages/GoalApproachPlanner";
 import RoadmapHistory from "./pages/RoadmapHistory";
 import Roadmap from "./pages/Roadmap";
 import StudyOptimizer from "./pages/StudyOptimizer";
@@ -37,7 +37,9 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/reality-check" element={<RealityCheck />} />
-            <Route path="/problem-decomposer" element={<ProblemDecomposer />} />
+            <Route path="/approach-planner" element={<GoalApproachPlanner />} />
+            {/* Redirect old decomposer URL to approach planner */}
+            <Route path="/problem-decomposer" element={<Navigate to="/approach-planner" replace />} />
             <Route path="/roadmap" element={<Roadmap />} />
             <Route path="/roadmap-history" element={<RoadmapHistory />} />
             <Route path="/study-optimizer" element={<StudyOptimizer />} />
