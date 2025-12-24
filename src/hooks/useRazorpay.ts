@@ -59,9 +59,7 @@ export function useRazorpay() {
       // Create order via edge function
       const { data, error } = await supabase.functions.invoke("create-razorpay-order", {
         body: {
-          planId: plan.id,
-          amount: plan.price,
-          tokens: plan.tokens,
+          packageId: plan.id,
         },
       });
 
