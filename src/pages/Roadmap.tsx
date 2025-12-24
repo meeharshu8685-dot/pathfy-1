@@ -45,6 +45,13 @@ export default function Roadmap() {
   const [roadmap, setRoadmap] = useState<MentorRoadmap | null>(null);
   const [isBuilding, setIsBuilding] = useState(false);
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
+  const [isViewingHistory, setIsViewingHistory] = useState(false);
+
+  // Get the goalId from URL
+  const goalIdParam = searchParams.get("goalId");
+
+  // Fetch existing roadmaps for this goal
+  const { roadmaps: existingRoadmaps, isLoading: isLoadingRoadmaps } = useRoadmaps(goalIdParam);
 
   // Get the most recent approved goal
   const approvedGoal = goals.find(g =>
@@ -55,13 +62,23 @@ export default function Roadmap() {
   const hasCompletedDecomposer = !!approvedGoal?.achievement_plan;
 
   useEffect(() => {
-    const goalIdParam = searchParams.get("goalId");
     if (goalIdParam) {
       setSelectedGoalId(goalIdParam);
+      // If we have existing roadmaps for this goal, load the most recent one
+      if (existingRoadmaps && existingRoadmaps.length > 0) {
+        const latestRoadmap = existingRoadmaps[0];
+        setRoadmap({
+          phases: latestRoadmap.phases,
+          whatToIgnore: latestRoadmap.whatToIgnore || [],
+          finalRealityCheck: latestRoadmap.finalRealityCheck || '',
+          closingMotivation: latestRoadmap.closingMotivation || ''
+        });
+        setIsViewingHistory(true);
+      }
     } else if (approvedGoal) {
       setSelectedGoalId(approvedGoal.id);
     }
-  }, [searchParams, approvedGoal]);
+  }, [goalIdParam, approvedGoal, existingRoadmaps]);
 
   const currentGoal = selectedGoalId
     ? goals.find(g => g.id === selectedGoalId)
