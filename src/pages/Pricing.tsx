@@ -75,6 +75,7 @@ export default function Pricing() {
   const { initiatePayment, isProcessing } = useRazorpay();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
   const handlePlanClick = (plan: typeof plans[0]) => {
     if (!user) {
@@ -83,6 +84,7 @@ export default function Pricing() {
     }
 
     if (plan.isPaid) {
+      setProcessingId(plan.id);
       initiatePayment({
         id: plan.id,
         name: plan.name,
@@ -118,8 +120,8 @@ export default function Pricing() {
               <div
                 key={plan.name}
                 className={`relative p-6 rounded-2xl border ${plan.popular
-                    ? "card-gradient border-primary/50 shadow-lg shadow-primary/10"
-                    : "bg-card border-border"
+                  ? "card-gradient border-primary/50 shadow-lg shadow-primary/10"
+                  : "bg-card border-border"
                   }`}
               >
                 {plan.popular && (
@@ -161,7 +163,7 @@ export default function Pricing() {
                   onClick={() => handlePlanClick(plan)}
                   disabled={isProcessing}
                 >
-                  {isProcessing ? (
+                  {isProcessing && processingId === plan.id ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Processing...
