@@ -22,25 +22,36 @@ export interface MentorRoadmap {
   finalRealityCheck: string;
   closingMotivation: string;
   created_at?: string;
+  is_favorite?: boolean;
 }
 
-export function useRoadmaps(goalId?: string | null) {
+export function useRoadmaps(goalId?: string | null, fetchAllHistory = false) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: roadmaps, isLoading } = useQuery({
-    queryKey: ["roadmaps", goalId],
+    queryKey: ["roadmaps", goalId, fetchAllHistory],
     queryFn: async () => {
-      if (!goalId) return [];
+      if (!user?.id) return [];
 
-      const { data: roadmapsData, error: roadmapsError } = await supabase
+      let query = supabase
         .from("roadmaps")
         .select(`
           *,
           roadmap_steps (*)
         `)
-        .eq("goal_id", goalId)
         .order("created_at", { ascending: false });
+
+      // If getting history, fetch for user. If getting for goal, filter by goal.
+      if (goalId) {
+        query = query.eq("goal_id", goalId);
+      } else if (fetchAllHistory) {
+        query = query.eq("user_id", user.id);
+      } else {
+        return [];
+      }
+
+      const { data: roadmapsData, error: roadmapsError } = await query;
 
       if (roadmapsError) throw roadmapsError;
 
@@ -52,6 +63,7 @@ export function useRoadmaps(goalId?: string | null) {
         finalRealityCheck: rm.final_reality_check,
         closingMotivation: rm.closing_motivation,
         created_at: rm.created_at,
+        is_favorite: rm.is_favorite,
         phases: rm.roadmap_steps
           .sort((a: any, b: any) => a.phase_number - b.phase_number)
           .map((step: any) => ({
@@ -66,7 +78,7 @@ export function useRoadmaps(goalId?: string | null) {
           }))
       })) as MentorRoadmap[];
     },
-    enabled: !!goalId,
+    enabled: !!user?.id && (!!goalId || fetchAllHistory),
   });
 
   const saveRoadmap = useMutation({
@@ -117,9 +129,37 @@ export function useRoadmaps(goalId?: string | null) {
       return rmData;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["roadmaps", goalId] });
+      queryClient.invalidateQueries({ queryKey: ["roadmaps"] });
     },
   });
 
-  return { roadmaps: roadmaps ?? [], isLoading, saveRoadmap };
+  const toggleFavorite = useMutation({
+    mutationFn: async ({ id, isFavorite }: { id: string; isFavorite: boolean }) => {
+      const { error } = await supabase
+        .from("roadmaps")
+        .update({ is_favorite: isFavorite })
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["roadmaps"] });
+    },
+  });
+
+  const deleteRoadmap = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("roadmaps")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["roadmaps"] });
+    },
+  });
+
+  return { roadmaps: roadmaps ?? [], isLoading, saveRoadmap, toggleFavorite, deleteRoadmap };
 }

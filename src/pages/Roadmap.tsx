@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTokens } from "@/hooks/useTokens";
 import { useGoals } from "@/hooks/useGoals";
+import { useRoadmaps } from "@/hooks/useRoadmaps";
 import { toast } from "@/hooks/use-toast";
 
 interface RoadmapPhaseData {
@@ -39,13 +40,14 @@ export default function Roadmap() {
   const { user } = useAuth();
   const { tokens, spendTokens, canAfford } = useTokens();
   const { goals } = useGoals();
+  const { saveRoadmap } = useRoadmaps();
 
   const [roadmap, setRoadmap] = useState<MentorRoadmap | null>(null);
   const [isBuilding, setIsBuilding] = useState(false);
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
 
   // Get the most recent approved goal
-  const approvedGoal = goals.find(g => 
+  const approvedGoal = goals.find(g =>
     g.feasibility_status && g.achievement_plan
   );
 
@@ -61,8 +63,8 @@ export default function Roadmap() {
     }
   }, [searchParams, approvedGoal]);
 
-  const currentGoal = selectedGoalId 
-    ? goals.find(g => g.id === selectedGoalId) 
+  const currentGoal = selectedGoalId
+    ? goals.find(g => g.id === selectedGoalId)
     : approvedGoal;
 
   const handleBuildRoadmap = async () => {
@@ -114,7 +116,18 @@ export default function Roadmap() {
       if (error) throw error;
 
       const result = data.result as MentorRoadmap;
-      setRoadmap(result);
+
+      // Add required fields for persistence
+      const fullRoadmap = {
+        ...result,
+        goal_id: currentGoal.id,
+        title: currentGoal.title
+      };
+
+      setRoadmap(fullRoadmap);
+
+      // Save to database
+      await saveRoadmap.mutateAsync(fullRoadmap);
 
       await spendTokens.mutateAsync({
         amount: TOKEN_COST,
@@ -123,8 +136,8 @@ export default function Roadmap() {
       });
 
       toast({
-        title: "Roadmap Created",
-        description: `Your personalized ${result.phases.length}-phase roadmap is ready.`,
+        title: "Roadmap Created & Saved",
+        description: `Your personalized ${result.phases.length}-phase roadmap is ready. Check History to view later.`,
       });
 
     } catch (error) {
@@ -139,17 +152,36 @@ export default function Roadmap() {
     }
   };
 
-  const deadlineWeeks = currentGoal 
+  const deadlineWeeks = currentGoal
     ? Math.ceil((new Date(currentGoal.deadline).getTime() - Date.now()) / (7 * 24 * 60 * 60 * 1000))
     : 12;
 
   const canBuildRoadmap = hasCompletedRealityCheck && hasCompletedDecomposer && currentGoal;
 
+  const handlePhaseUpdate = async (updatedPhase: RoadmapPhaseData) => {
+    if (!roadmap) return;
+
+    const newPhases = roadmap.phases.map(p =>
+      p.phaseNumber === updatedPhase.phaseNumber ? { ...p, ...updatedPhase } : p
+    );
+
+    const updatedRoadmap = { ...roadmap, phases: newPhases };
+    setRoadmap(updatedRoadmap);
+
+    try {
+      await saveRoadmap.mutateAsync(updatedRoadmap);
+      toast({ title: "Roadmap updated" });
+    } catch (error) {
+      console.error("Failed to update roadmap:", error);
+      toast({ title: "Failed to save changes", variant: "destructive" });
+    }
+  };
+
   return (
     <Layout>
       <div className="py-12">
         <div className="container mx-auto px-4">
-          {/* Header */}
+          {/* ... (Header section remains same) */}
           <div className="max-w-3xl mx-auto text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary border border-border mb-6">
               <Map className="w-4 h-4 text-primary" />
@@ -186,7 +218,7 @@ export default function Roadmap() {
                     <div>
                       <h2 className="text-xl font-semibold mb-2">Ready to Build Your Roadmap</h2>
                       <p className="text-muted-foreground text-sm">
-                        Based on your Path Feasibility and goal analysis, we'll create a personalized 
+                        Based on your Path Feasibility and goal analysis, we'll create a personalized
                         phase-by-phase learning path.
                       </p>
                     </div>
@@ -259,7 +291,11 @@ export default function Roadmap() {
                 <div className="space-y-4">
                   {roadmap.phases.map((phase, index) => (
                     <div key={index} className="animate-slide-up" style={{ animationDelay: `${index * 0.1}s` }}>
-                      <RoadmapPhase {...phase} />
+                      <RoadmapPhase
+                        {...phase}
+                        isEditable={true}
+                        onUpdate={handlePhaseUpdate}
+                      />
                     </div>
                   ))}
                 </div>

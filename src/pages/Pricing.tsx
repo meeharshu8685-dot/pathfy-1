@@ -2,8 +2,7 @@ import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { TokenDisplay } from "@/components/shared/TokenDisplay";
-import { Check, Zap, Star, Rocket, Loader2 } from "lucide-react";
-import { useRazorpay } from "@/hooks/useRazorpay";
+import { Check, Zap, Star, Rocket } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { PromoCodeSection } from "@/components/pricing/PromoCodeSection";
@@ -73,7 +72,6 @@ const tokenCosts = [
 ];
 
 export default function Pricing() {
-  const { initiatePayment, isProcessing } = useRazorpay();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -85,13 +83,9 @@ export default function Pricing() {
     }
 
     if (plan.isPaid) {
-      setProcessingId(plan.id);
-      initiatePayment({
-        id: plan.id,
-        name: plan.name,
-        price: plan.price,
-        tokens: plan.tokens,
-      });
+      // Payment gateway has been removed
+      // Users can no longer purchase tokens directly
+      return;
     } else {
       navigate("/dashboard");
     }
@@ -162,16 +156,9 @@ export default function Pricing() {
                   variant={plan.variant}
                   className="w-full"
                   onClick={() => handlePlanClick(plan)}
-                  disabled={isProcessing}
+                  disabled={plan.isPaid}
                 >
-                  {isProcessing && processingId === plan.id ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    plan.cta
-                  )}
+                  {plan.isPaid ? "Coming Soon" : plan.cta}
                 </Button>
               </div>
             ))}
