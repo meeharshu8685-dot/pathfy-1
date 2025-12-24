@@ -138,7 +138,7 @@ export default function RealityCheck() {
   const [isDownloading, setIsDownloading] = useState(false);
 
   const deadlineWeeks = deadlineUnit === "months" ? deadlineValue * 4 : deadlineValue;
-  
+
   // Get the actual goal text
   const getGoalText = () => {
     if (goalInputMode === "manual") return goal;
@@ -210,8 +210,14 @@ export default function RealityCheck() {
       });
 
       if (error) throw error;
+      if (!data?.result) throw new Error("No analysis data received from AI");
 
       const analysisResult = data.result as AchievementPlanData;
+
+      if (!analysisResult.feasibilityStatus) {
+        throw new Error("Invalid analysis format: missing feasibility status");
+      }
+
       setResult(analysisResult);
 
       // Spend tokens
@@ -309,15 +315,15 @@ export default function RealityCheck() {
         {step === "input" && user && (
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ActiveTab)} className="animate-fade-in">
             <TabsList className="grid w-full grid-cols-2 h-11 sm:h-12 rounded-xl bg-secondary/50 p-1">
-              <TabsTrigger 
-                value="new" 
+              <TabsTrigger
+                value="new"
                 className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm font-medium"
               >
                 <Sparkles className="h-4 w-4 mr-2" />
                 New Analysis
               </TabsTrigger>
-              <TabsTrigger 
-                value="history" 
+              <TabsTrigger
+                value="history"
                 className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm font-medium"
               >
                 <History className="h-4 w-4 mr-2" />
@@ -338,221 +344,221 @@ export default function RealityCheck() {
                 </CardHeader>
                 <CardContent className="space-y-5 sm:space-y-6">
                   {/* Field Selection - First */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Field</Label>
-                <Select value={field} onValueChange={handleFieldChange}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {FIELDS.map((f) => (
-                      <SelectItem key={f.value} value={f.value}>
-                        {f.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Goal Input - Two Sections */}
-              <div className="space-y-3 sm:space-y-4">
-                <Label className="text-sm font-medium">Target Goal or Position</Label>
-                
-                {/* Toggle between modes */}
-                <div className="flex gap-1.5 sm:gap-2 p-1 rounded-xl bg-secondary/50">
-                  <Button
-                    type="button"
-                    variant={goalInputMode === "select" ? "default" : "ghost"}
-                    size="sm"
-                    className="flex-1 text-xs sm:text-sm h-9 sm:h-10"
-                    onClick={() => setGoalInputMode("select")}
-                  >
-                    Choose from list
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={goalInputMode === "manual" ? "default" : "ghost"}
-                    size="sm"
-                    className="flex-1 text-xs sm:text-sm h-9 sm:h-10"
-                    onClick={() => setGoalInputMode("manual")}
-                  >
-                    Write manually
-                  </Button>
-                </div>
-
-                {/* Select Mode */}
-                {goalInputMode === "select" && (
                   <div className="space-y-2">
-                    {FIELD_GOALS[field]?.length > 0 ? (
-                      <Select value={selectedGoal} onValueChange={setSelectedGoal}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a goal/position..." />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-[280px] sm:max-h-[300px]">
-                          {FIELD_GOALS[field].map((g) => (
-                            <SelectItem key={g.value} value={g.value}>
-                              {g.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 border border-border text-center">
-                        <p className="text-xs sm:text-sm text-muted-foreground">
-                          No preset goals for this field. Please write your goal manually.
-                        </p>
-                        <Button
-                          type="button"
-                          variant="link"
-                          size="sm"
-                          onClick={() => setGoalInputMode("manual")}
-                          className="mt-2 text-xs sm:text-sm"
-                        >
-                          Switch to manual input
-                        </Button>
+                    <Label className="text-sm font-medium">Field</Label>
+                    <Select value={field} onValueChange={handleFieldChange}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {FIELDS.map((f) => (
+                          <SelectItem key={f.value} value={f.value}>
+                            {f.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Goal Input - Two Sections */}
+                  <div className="space-y-3 sm:space-y-4">
+                    <Label className="text-sm font-medium">Target Goal or Position</Label>
+
+                    {/* Toggle between modes */}
+                    <div className="flex gap-1.5 sm:gap-2 p-1 rounded-xl bg-secondary/50">
+                      <Button
+                        type="button"
+                        variant={goalInputMode === "select" ? "default" : "ghost"}
+                        size="sm"
+                        className="flex-1 text-xs sm:text-sm h-9 sm:h-10"
+                        onClick={() => setGoalInputMode("select")}
+                      >
+                        Choose from list
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={goalInputMode === "manual" ? "default" : "ghost"}
+                        size="sm"
+                        className="flex-1 text-xs sm:text-sm h-9 sm:h-10"
+                        onClick={() => setGoalInputMode("manual")}
+                      >
+                        Write manually
+                      </Button>
+                    </div>
+
+                    {/* Select Mode */}
+                    {goalInputMode === "select" && (
+                      <div className="space-y-2">
+                        {FIELD_GOALS[field]?.length > 0 ? (
+                          <Select value={selectedGoal} onValueChange={setSelectedGoal}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a goal/position..." />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[280px] sm:max-h-[300px]">
+                              {FIELD_GOALS[field].map((g) => (
+                                <SelectItem key={g.value} value={g.value}>
+                                  {g.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <div className="p-3 sm:p-4 rounded-xl bg-secondary/50 border border-border text-center">
+                            <p className="text-xs sm:text-sm text-muted-foreground">
+                              No preset goals for this field. Please write your goal manually.
+                            </p>
+                            <Button
+                              type="button"
+                              variant="link"
+                              size="sm"
+                              onClick={() => setGoalInputMode("manual")}
+                              className="mt-2 text-xs sm:text-sm"
+                            >
+                              Switch to manual input
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     )}
+
+                    {/* Manual Mode */}
+                    {goalInputMode === "manual" && (
+                      <Input
+                        id="goal"
+                        placeholder="e.g., Become a Full-Stack Developer..."
+                        value={goal}
+                        onChange={(e) => setGoal(e.target.value)}
+                        className="text-sm sm:text-base"
+                      />
+                    )}
                   </div>
-                )}
 
-                {/* Manual Mode */}
-                {goalInputMode === "manual" && (
-                  <Input
-                    id="goal"
-                    placeholder="e.g., Become a Full-Stack Developer..."
-                    value={goal}
-                    onChange={(e) => setGoal(e.target.value)}
-                    className="text-sm sm:text-base"
-                  />
-                )}
-              </div>
+                  {/* Skill Level */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Current Skill Level (Self-Assessment)</Label>
+                    <Select value={skillLevel} onValueChange={setSkillLevel}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SKILL_LEVELS.map((s) => (
+                          <SelectItem key={s.value} value={s.value}>
+                            {s.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              {/* Skill Level */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Current Skill Level (Self-Assessment)</Label>
-                <Select value={skillLevel} onValueChange={setSkillLevel}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SKILL_LEVELS.map((s) => (
-                      <SelectItem key={s.value} value={s.value}>
-                        {s.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  {/* Hours per Week */}
+                  <div className="space-y-3 sm:space-y-4">
+                    <div className="flex justify-between items-center">
+                      <Label className="text-sm font-medium">Available Hours per Week</Label>
+                      <span className="text-sm sm:text-base font-semibold text-primary bg-primary/10 px-2.5 py-0.5 rounded-lg">{hoursPerWeek} hrs</span>
+                    </div>
+                    <Slider
+                      value={[hoursPerWeek]}
+                      onValueChange={([v]) => setHoursPerWeek(v)}
+                      min={5}
+                      max={60}
+                      step={5}
+                      className="py-2"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>5 hrs</span>
+                      <span>60 hrs</span>
+                    </div>
+                  </div>
 
-              {/* Hours per Week */}
-              <div className="space-y-3 sm:space-y-4">
-                <div className="flex justify-between items-center">
-                  <Label className="text-sm font-medium">Available Hours per Week</Label>
-                  <span className="text-sm sm:text-base font-semibold text-primary bg-primary/10 px-2.5 py-0.5 rounded-lg">{hoursPerWeek} hrs</span>
-                </div>
-                <Slider
-                  value={[hoursPerWeek]}
-                  onValueChange={([v]) => setHoursPerWeek(v)}
-                  min={5}
-                  max={60}
-                  step={5}
-                  className="py-2"
-                />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>5 hrs</span>
-                  <span>60 hrs</span>
-                </div>
-              </div>
+                  {/* Deadline */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Target Timeline</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={deadlineUnit === "months" ? 36 : 52}
+                        value={deadlineValue}
+                        onChange={(e) => setDeadlineValue(parseInt(e.target.value) || 1)}
+                        className="text-center"
+                      />
+                      <Select value={deadlineUnit} onValueChange={(v: "weeks" | "months") => setDeadlineUnit(v)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="weeks">Weeks</SelectItem>
+                          <SelectItem value="months">Months</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center sm:text-left">
+                      ≈ {deadlineWeeks} weeks total ({Math.round(hoursPerWeek * deadlineWeeks)} hours available)
+                    </p>
+                  </div>
 
-              {/* Deadline */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Target Timeline</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  <Input
-                    type="number"
-                    min={1}
-                    max={deadlineUnit === "months" ? 36 : 52}
-                    value={deadlineValue}
-                    onChange={(e) => setDeadlineValue(parseInt(e.target.value) || 1)}
-                    className="text-center"
-                  />
-                  <Select value={deadlineUnit} onValueChange={(v: "weeks" | "months") => setDeadlineUnit(v)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="weeks">Weeks</SelectItem>
-                      <SelectItem value="months">Months</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <p className="text-xs text-muted-foreground text-center sm:text-left">
-                  ≈ {deadlineWeeks} weeks total ({Math.round(hoursPerWeek * deadlineWeeks)} hours available)
-                </p>
-              </div>
+                  {/* Action Buttons */}
+                  <div className="space-y-3 pt-2">
+                    <Button
+                      onClick={handleStartQuiz}
+                      className="w-full"
+                      variant="hero"
+                      size="lg"
+                      disabled={goalInputMode === "select" ? !selectedGoal : !goal.trim()}
+                    >
+                      <Brain className="h-4 w-4 mr-2" />
+                      Continue to Skill Quiz
+                    </Button>
 
-              {/* Action Buttons */}
-              <div className="space-y-3 pt-2">
-                <Button 
-                  onClick={handleStartQuiz} 
-                  className="w-full" 
-                  variant="hero"
-                  size="lg" 
-                  disabled={goalInputMode === "select" ? !selectedGoal : !goal.trim()}
-                >
-                  <Brain className="h-4 w-4 mr-2" />
-                  Continue to Skill Quiz
-                </Button>
+                    <Button
+                      onClick={handleContinueWithoutQuiz}
+                      variant="outline"
+                      className="w-full"
+                      size="lg"
+                      disabled={goalInputMode === "select" ? !selectedGoal : !goal.trim()}
+                    >
+                      Continue without Skill Quiz
+                    </Button>
+                  </div>
 
-                <Button 
-                  onClick={handleContinueWithoutQuiz} 
-                  variant="outline"
-                  className="w-full" 
-                  size="lg"
-                  disabled={goalInputMode === "select" ? !selectedGoal : !goal.trim()}
-                >
-                  Continue without Skill Quiz
-                </Button>
-              </div>
+                  <p className="text-xs text-center text-muted-foreground px-4">
+                    The skill quiz helps calibrate your actual level for more accurate analysis
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-              <p className="text-xs text-center text-muted-foreground px-4">
-                The skill quiz helps calibrate your actual level for more accurate analysis
-              </p>
+            <TabsContent value="history" className="mt-4 sm:mt-6">
+              <GoalHistory />
+            </TabsContent>
+          </Tabs>
+        )}
+
+        {/* Step: Input Form for non-logged in users */}
+        {step === "input" && !user && (
+          <Card className="border-border/50 animate-slide-up" variant="glass">
+            <CardHeader className="pb-4 sm:pb-6">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-2xl">
+                <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                Define Your Goal
+              </CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
+                Sign in to save your analysis and view history
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center py-8">
+              <p className="text-muted-foreground mb-4">Please sign in to use the Achievement Planner</p>
+              <Button variant="hero" onClick={() => navigate("/login")}>
+                Sign In to Continue
+              </Button>
             </CardContent>
           </Card>
-        </TabsContent>
+        )}
 
-        <TabsContent value="history" className="mt-4 sm:mt-6">
-          <GoalHistory />
-        </TabsContent>
-      </Tabs>
-    )}
-
-    {/* Step: Input Form for non-logged in users */}
-    {step === "input" && !user && (
-      <Card className="border-border/50 animate-slide-up" variant="glass">
-        <CardHeader className="pb-4 sm:pb-6">
-          <CardTitle className="flex items-center gap-2 text-lg sm:text-2xl">
-            <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-            Define Your Goal
-          </CardTitle>
-          <CardDescription className="text-xs sm:text-sm">
-            Sign in to save your analysis and view history
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="text-center py-8">
-          <p className="text-muted-foreground mb-4">Please sign in to use the Achievement Planner</p>
-          <Button variant="hero" onClick={() => navigate("/login")}>
-            Sign In to Continue
-          </Button>
-        </CardContent>
-      </Card>
-    )}
-
-    {/* Step: Adaptive Quiz */}
-    {step === "quiz" && (
-      <AdaptiveQuiz field={field} onComplete={handleQuizComplete} onSkip={handleSkipQuiz} />
-    )}
+        {/* Step: Adaptive Quiz */}
+        {step === "quiz" && (
+          <AdaptiveQuiz field={field} onComplete={handleQuizComplete} onSkip={handleSkipQuiz} />
+        )}
 
         {/* Step: Analyzing */}
         {step === "analyzing" && (

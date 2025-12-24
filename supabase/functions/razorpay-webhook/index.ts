@@ -76,7 +76,7 @@ serve(async (req) => {
 
         // Initialize Supabase Admin
         const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-        const supabaseServiceKey = Deno.env.get('SB_SERVICE_ROLE_KEY')!;
+        const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SB_SERVICE_ROLE_KEY')!;
         const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
         // 1. Check for Idempotency (Has this payment already been processed?)
