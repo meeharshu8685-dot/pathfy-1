@@ -1,24 +1,10 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-interface AnalyzeRequest {
-  type: "reality-check" | "reality-check-v2" | "decompose" | "roadmap" | "roadmap-v2" | "optimize";
-  goal: string;
-  field?: string;
-  skillLevel?: string;
-  calibratedSkillLevel?: string;
-  hoursPerWeek?: number;
-  deadlineWeeks?: number;
-  availableMinutes?: number;
-  focusLevel?: number;
-  existingTasks?: unknown[];
-  quizResults?: unknown;
-  consistencyNote?: string;
-}
 
 const FIELD_EFFORT_TABLES = `
 CONSERVATIVE EFFORT TABLES BY FIELD (base hours for intermediate level):
@@ -316,180 +302,118 @@ Return a JSON object with EXACTLY this structure:
 }`
 };
 
+// @ts-ignore
 serve(async (req) => {
+  // Handle CORS
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const body: AnalyzeRequest = await req.json();
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY")?.trim();
+    if (!GEMINI_API_KEY) {
+      throw new Error("GEMINI_API_KEY not configured");
+    }
+
+    const body = await req.json();
     const { type, goal, field, skillLevel, calibratedSkillLevel, hoursPerWeek, deadlineWeeks, availableMinutes, focusLevel, existingTasks, quizResults } = body;
 
-    console.log(`Processing ${type} request for goal: ${goal?.substring(0, 50)}...`);
+    console.log(`Analyzing goal: ${type}`);
 
     let userPrompt = "";
+    // @ts-ignore
+    const systemPrompt = SYSTEM_PROMPTS[type];
 
+    if (!systemPrompt) {
+      throw new Error(`Invalid analysis type: ${type}`);
+    }
+
+    // Construct prompt based on type
     switch (type) {
       case "reality-check-v2":
         const effectiveLevel = calibratedSkillLevel || skillLevel || "beginner";
-        const totalWeeks = deadlineWeeks || 12;
-        const weeklyHours = hoursPerWeek || 10;
-        const rawAvailableHours = weeklyHours * totalWeeks;
-
-        userPrompt = `Analyze this career/learning goal for a student:
-
-GOAL: ${goal}
-FIELD: ${field || "other"}
-SKILL LEVEL (self-declared): ${skillLevel || "beginner"}
-CALIBRATED SKILL LEVEL (from quiz): ${effectiveLevel}
-${quizResults ? `QUIZ CONFIDENCE: ${JSON.stringify(quizResults)}` : ""}
-
-AVAILABLE TIME:
-- Hours per week: ${weeklyHours}
-- Timeline: ${totalWeeks} weeks
-- Raw available hours: ${rawAvailableHours}
-- After 0.7 real-life reduction: ${Math.round(rawAvailableHours * 0.7)} effective hours
-
-Provide a comprehensive, HONEST assessment. Use the effort tables for the "${field || "other"}" field.
-Apply the skill level multiplier to required hours.
-This feature MUST be able to say NO if the goal is unrealistic.
-Provide exactly 3-5 recommended resources.`;
+        userPrompt = `Analyze goal: ${goal}
+Field: ${field || "general"}
+Skill: ${effectiveLevel}
+Time: ${hoursPerWeek}hrs/week for ${deadlineWeeks} weeks.`;
         break;
 
       case "reality-check":
-        const availableHours = (hoursPerWeek || 10) * (deadlineWeeks || 12);
-        userPrompt = `Analyze this goal for feasibility:
-Goal: ${goal}
-Current skill level: ${skillLevel || "beginner"}
-Available hours per week: ${hoursPerWeek || 10}
-Deadline: ${deadlineWeeks || 12} weeks (${availableHours} total hours available)
-
-Provide a realistic assessment. Be conservative. This feature must be able to say NO.`;
+        userPrompt = `Feasibility of: ${goal}. Time: ${hoursPerWeek}hrs/week, ${deadlineWeeks} weeks.`;
         break;
 
       case "decompose":
-        userPrompt = `Decompose this goal into atomic tasks:
-Goal: ${goal}
-
-Create 3-5 phases with 2-4 tasks each. Each task should have 2-5 micro-tasks.
-Remember: NO task > 90 minutes, NO vague verbs, all tasks must be measurable.`;
+        userPrompt = `Break down: ${goal}`;
         break;
 
       case "roadmap":
-        userPrompt = `Build a dependency-locked roadmap for:
-Goal: ${goal}
-
-Create 8-15 sequential steps with proper dependencies. Include 3-4 milestones.
-First step is unlocked, all others are locked until prerequisites complete.`;
+        userPrompt = `Roadmap for: ${goal}`;
         break;
 
       case "roadmap-v2":
-        userPrompt = `Create a mentor-written, phase-based roadmap for this student:
-
-GOAL: ${goal}
-FIELD: ${field || "general"}
-SKILL LEVEL: ${skillLevel || "beginner"}
-WEEKLY TIME COMMITMENT: ${hoursPerWeek || 10} hours per week
-TARGET DURATION: ${deadlineWeeks || 12} weeks
-
-Create 6-9 sequential phases that feel realistic and achievable.
-Reference their ${hoursPerWeek || 10} hours/week commitment in time estimates.
-Be honest about what can be achieved in ${deadlineWeeks || 12} weeks.
-Write as if you've personally guided students through this path before.`;
+        userPrompt = `Create structured roadmap for: ${goal}
+Field: ${field || "general"}
+Time: ${hoursPerWeek}hrs/week for ${deadlineWeeks} weeks.`;
         break;
 
       case "optimize":
-        const recentTasks = existingTasks || [];
-        const taskContext = recentTasks.length > 0
-          ? `CURRENT ROADMAP TASKS (prioritize these):\n${JSON.stringify(recentTasks, null, 2)}`
-          : "No active roadmap tasks - suggest general review or foundational work";
-
-        userPrompt = `Decide what this student should do TODAY:
-
-AVAILABLE TIME: ${availableMinutes || 60} minutes
-ENERGY LEVEL: ${focusLevel || 50}/100
-
-${taskContext}
-
-CONSISTENCY HISTORY: ${body.consistencyNote || "First session or unknown history"}
-
-Based on their time (${availableMinutes || 60} min) and energy (${focusLevel || 50}/100), suggest what to execute RIGHT NOW.
-- Maximum 3 tasks
-- Tasks must fit within ${availableMinutes || 60} minutes total
-- If energy < 30, suggest only light review or rest
-- Be calm, honest, and supportive`;
+        userPrompt = `Optimization plan. Time: ${availableMinutes}min. Energy: ${focusLevel}.`;
         break;
 
       default:
-        throw new Error(`Unknown analysis type: ${type}`);
+        userPrompt = `Goal: ${goal}`;
     }
 
-    const systemPrompt = SYSTEM_PROMPTS[type];
-
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-
-    if (!GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is not configured");
-    }
-
+    // Call Gemini with Safety Settings to prevent 500s on sensitive topics
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{
-          parts: [{
-            text: `${systemPrompt}\n\nUser Request:\n${userPrompt}`
-          }]
+          parts: [{ text: systemPrompt + "\n\nUser Request:\n" + userPrompt }]
         }],
+        safetySettings: [
+          { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+        ],
         generationConfig: {
-          response_mime_type: "application/json",
+          response_mime_type: "application/json"
         }
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Gemini API error:", response.status, errorText);
-      throw new Error(`Gemini API error: ${response.status}`);
+      console.error("Gemini API Error:", errorText);
+      throw new Error(`Gemini API Error: ${response.status} ${errorText}`);
     }
 
     const data = await response.json();
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    let content = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!content) {
-      throw new Error("No response from AI");
+      throw new Error("No response content from AI");
     }
 
-    console.log("AI response received, parsing...");
-
-    // Extract JSON from response (handle markdown code blocks if any, though response_mime_type should handle it)
-    let jsonStr = content;
-
-    const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (jsonMatch) {
-      jsonStr = jsonMatch[1].trim();
-    }
+    // Clean Markdown block if present
+    content = content.replace(/```json\n?|```/g, "").trim();
 
     try {
-      const result = JSON.parse(jsonStr);
-      console.log(`Successfully parsed ${type} response`);
-
-      return new Response(
-        JSON.stringify({ result, type }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    } catch (parseError) {
-      console.error("JSON parse error:", parseError, "Content:", content.substring(0, 500));
-      throw new Error("Failed to parse AI response as JSON");
+      const result = JSON.parse(content);
+      return new Response(JSON.stringify({ result, type }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    } catch (e: any) {
+      throw new Error("Failed to parse AI response JSON: " + e.message);
     }
 
-  } catch (error) {
-    console.error("Error in analyze-goal:", error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+  } catch (error: any) {
+    console.error("Detailed Error:", error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
+    });
   }
 });
