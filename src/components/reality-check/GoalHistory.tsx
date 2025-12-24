@@ -95,7 +95,8 @@ export function GoalHistory({ onSelectGoal }: GoalHistoryProps) {
     if (onSelectGoal) {
       onSelectGoal(goal);
     } else {
-      navigate(`/problem-decomposer?goalId=${goal.id}&goal=${encodeURIComponent(goal.title)}`);
+      // Navigate to reality check to view the saved analysis
+      navigate(`/reality-check?goalId=${goal.id}`);
     }
   };
 
@@ -127,7 +128,7 @@ export function GoalHistory({ onSelectGoal }: GoalHistoryProps) {
               <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${status?.className || "bg-muted text-muted-foreground"}`}>
                 <StatusIcon className="h-5 w-5" />
               </div>
-              
+
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <h4 className="font-medium text-sm sm:text-base truncate">{goal.title}</h4>
@@ -150,7 +151,7 @@ export function GoalHistory({ onSelectGoal }: GoalHistoryProps) {
                   )}
                 </div>
               </div>
-              
+
               <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
             </button>
           );

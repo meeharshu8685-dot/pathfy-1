@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -138,6 +138,49 @@ export default function RealityCheck() {
   const [isDownloading, setIsDownloading] = useState(false);
 
   const deadlineWeeks = deadlineUnit === "months" ? deadlineValue * 4 : deadlineValue;
+  const [searchParams] = useSearchParams();
+  const goalIdFromUrl = searchParams.get("goalId");
+  const [isViewingHistory, setIsViewingHistory] = useState(false);
+
+  // Load saved goal if goalId is in URL
+  useEffect(() => {
+    if (goalIdFromUrl && user) {
+      loadSavedGoal(goalIdFromUrl);
+    }
+  }, [goalIdFromUrl, user]);
+
+  const loadSavedGoal = async (goalId: string) => {
+    try {
+      const { data: savedGoal, error } = await supabase
+        .from("goals")
+        .select("*")
+        .eq("id", goalId)
+        .single();
+
+      if (error || !savedGoal) {
+        toast({ title: "Goal not found", variant: "destructive" });
+        return;
+      }
+
+      // Load the saved analysis
+      if (savedGoal.achievement_plan) {
+        setResult(savedGoal.achievement_plan as AchievementPlanData);
+        setSavedGoalId(savedGoal.id);
+        setIsViewingHistory(true);
+        setStep("result");
+        // Set form values from saved goal
+        setGoal(savedGoal.title);
+        setField(savedGoal.field || "other");
+        setSkillLevel(savedGoal.skill_level || "beginner");
+        setHoursPerWeek(savedGoal.hours_per_week || 10);
+      } else {
+        toast({ title: "No saved analysis found for this goal", variant: "destructive" });
+      }
+    } catch (err) {
+      console.error("Error loading goal:", err);
+      toast({ title: "Failed to load goal", variant: "destructive" });
+    }
+  };
 
   // Get the actual goal text
   const getGoalText = () => {
@@ -277,6 +320,11 @@ export default function RealityCheck() {
     setResult(null);
     setQuizResults(null);
     setSavedGoalId(null);
+    setIsViewingHistory(false);
+    // Clear URL params if viewing from history
+    if (goalIdFromUrl) {
+      navigate("/reality-check", { replace: true });
+    }
   };
 
   const handleDownload = async () => {
