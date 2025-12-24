@@ -23,11 +23,11 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
+
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
     });
-    
+
     // Service role client for updating data
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -73,21 +73,21 @@ serve(async (req) => {
       throw new Error('This promo code has reached its usage limit');
     }
 
-    // Check if user already redeemed this code
-    const { data: existingRedemption, error: redemptionError } = await supabaseAdmin
+    // Check user redemption count
+    const { count, error: countError } = await supabaseAdmin
       .from('promo_code_redemptions')
-      .select('id')
+      .select('id', { count: 'exact', head: true })
       .eq('promo_code_id', promoCode.id)
-      .eq('user_id', user.id)
-      .maybeSingle();
+      .eq('user_id', user.id);
 
-    if (redemptionError) {
-      console.error('Redemption check error:', redemptionError);
+    if (countError) {
+      console.error('Redemption check error:', countError);
       throw new Error('Failed to check redemption status');
     }
 
-    if (existingRedemption) {
-      throw new Error('You have already redeemed this promo code');
+    const maxUsesPerUser = promoCode.max_uses_per_user || 1;
+    if ((count || 0) >= maxUsesPerUser) {
+      throw new Error(`You have already redeemed this code ${maxUsesPerUser} time(s)`);
     }
 
     // Calculate tokens to give
@@ -175,9 +175,9 @@ serve(async (req) => {
         newBalance: newBalance,
         message: `Successfully redeemed! You received ${tokensToAdd} tokens.`,
       }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
+        status: 200
       }
     );
   } catch (error: unknown) {
@@ -185,9 +185,9 @@ serve(async (req) => {
     console.error('Error redeeming promo code:', error);
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400 
+        status: 400
       }
     );
   }
