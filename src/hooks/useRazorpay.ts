@@ -76,44 +76,21 @@ export function useRazorpay() {
         key: keyId,
         amount: amount,
         currency: currency,
-        name: "PathPilot",
+        name: "Path Pilot",
         description: `${plan.name} - ${plan.tokens} Tokens`,
         order_id: orderId,
         handler: async (response: any) => {
-          try {
-            // Verify payment
-            const { data: verifyData, error: verifyError } = await supabase.functions.invoke(
-              "verify-razorpay-payment",
-              {
-                body: {
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_signature: response.razorpay_signature,
-                  tokens: plan.tokens,
-                  planId: plan.id,
-                  amount: plan.price,
-                },
-              }
-            );
+          // Tokens are credited via WEBHOOK for security
+          // We just show a success message here
+          toast({
+            title: "Payment Successful!",
+            description: "Your tokens are being processed and will appear in your account within a few minutes.",
+          });
 
-            if (verifyError) {
-              throw new Error(verifyError.message || "Payment verification failed");
-            }
-
-            toast({
-              title: "Payment Successful!",
-              description: `${verifyData.tokens} tokens added to your account.`,
-            });
-
-            // Refresh profile to update token count
+          // Optionally wait a second and refresh
+          setTimeout(() => {
             queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
-          } catch (err: any) {
-            toast({
-              title: "Verification Failed",
-              description: err.message || "Please contact support.",
-              variant: "destructive",
-            });
-          }
+          }, 2000);
         },
         prefill: {
           email: user.email,

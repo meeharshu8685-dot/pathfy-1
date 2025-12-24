@@ -9,13 +9,13 @@ import { PromoCodeSection } from "@/components/pricing/PromoCodeSection";
 
 const plans = [
   {
-    id: "starter",
+    id: "free",
     name: "Starter",
     price: 0,
     tokens: 5,
     description: "Get started with basic execution tools",
     features: [
-      "5 free tokens/month",
+      "5 free tokens once",
       "Path Feasibility",
       "Problem Decomposer",
       "Basic Roadmap",
@@ -27,39 +27,36 @@ const plans = [
     isPaid: false,
   },
   {
-    id: "pro",
-    name: "Pro",
-    price: 299,
-    tokens: 50,
-    description: "For serious students and professionals",
+    id: "pack_25",
+    name: "Growth",
+    price: 99,
+    tokens: 25,
+    description: "Perfect for a single project execution",
     features: [
-      "50 tokens",
+      "25 tokens",
       "All Starter features",
       "Advanced Roadmaps",
       "Consistency Tracking",
-      "Failure Detection",
       "Priority Support",
     ],
-    cta: "Buy Pro",
+    cta: "Buy Growth",
     variant: "hero" as const,
     popular: true,
     isPaid: true,
   },
   {
-    id: "team",
-    name: "Team",
-    price: 799,
-    tokens: 200,
-    description: "For study groups and bootcamps",
+    id: "pack_60",
+    name: "Pro",
+    price: 199,
+    tokens: 60,
+    description: "For serious students and high performers",
     features: [
-      "200 tokens",
-      "All Pro features",
-      "Team Dashboard",
-      "Progress Sharing",
-      "Admin Controls",
-      "Slack Integration",
+      "60 tokens",
+      "All Growth features",
+      "Priority execution logic",
+      "Custom optimization",
     ],
-    cta: "Buy Team",
+    cta: "Buy Pro",
     variant: "outline" as const,
     popular: false,
     isPaid: true,
@@ -120,11 +117,10 @@ export default function Pricing() {
             {plans.map((plan) => (
               <div
                 key={plan.name}
-                className={`relative p-6 rounded-2xl border ${
-                  plan.popular
+                className={`relative p-6 rounded-2xl border ${plan.popular
                     ? "card-gradient border-primary/50 shadow-lg shadow-primary/10"
                     : "bg-card border-border"
-                }`}
+                  }`}
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -159,8 +155,8 @@ export default function Pricing() {
                   ))}
                 </ul>
 
-                <Button 
-                  variant={plan.variant} 
+                <Button
+                  variant={plan.variant}
                   className="w-full"
                   onClick={() => handlePlanClick(plan)}
                   disabled={isProcessing}
@@ -206,7 +202,7 @@ export default function Pricing() {
               <Rocket className="w-8 h-8 text-success mx-auto mb-3" />
               <h3 className="text-lg font-semibold mb-2">Complete Milestones, Earn Tokens</h3>
               <p className="text-sm text-muted-foreground">
-                When you complete a milestone in your roadmap, you get 1 token refunded. 
+                When you complete a milestone in your roadmap, you get 1 token refunded.
                 Execution rewards execution.
               </p>
             </div>
