@@ -115,9 +115,14 @@ export function useRoadmaps(goalId?: string | null, fetchAllHistory = false) {
         return avg;
       };
 
-      // 2. Insert/Update Steps
+      // 2. Delete existing steps for this roadmap first
+      await supabase
+        .from("roadmap_steps")
+        .delete()
+        .eq("roadmap_id", rmData.id);
+
+      // 3. Insert new steps
       const stepsToInsert = roadmap.phases.map((phase) => ({
-        id: phase.id,
         roadmap_id: rmData.id,
         user_id: user.id,
         phase_number: phase.phaseNumber,
@@ -128,12 +133,12 @@ export function useRoadmaps(goalId?: string | null, fetchAllHistory = false) {
         what_to_learn: phase.whatToLearn,
         what_to_do: phase.whatToDo,
         outcome: phase.outcome,
-        status: "locked" as const
+        status: "locked"
       }));
 
       const { error: stepsError } = await supabase
         .from("roadmap_steps")
-        .upsert(stepsToInsert);
+        .insert(stepsToInsert);
 
       if (stepsError) throw stepsError;
 
