@@ -1,8 +1,8 @@
 import { Layout } from "@/components/layout/Layout";
-import { Testimonials } from "@/components/home/Testimonials";
+import { Reviews } from "@/components/home/Reviews";
 import { Star, MessageSquare } from "lucide-react";
 
-export default function TestimonialsPage() {
+export default function ReviewsPage() {
     return (
         <Layout>
             <div className="pt-20 pb-12">
@@ -10,17 +10,17 @@ export default function TestimonialsPage() {
                     <div className="max-w-4xl mx-auto text-center mb-16">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary mb-6">
                             <Star className="w-4 h-4 fill-current" />
-                            <span className="text-sm font-medium">User Success Stories</span>
+                            <span className="text-sm font-medium">User Reviews</span>
                         </div>
                         <h1 className="text-4xl md:text-6xl font-extrabold font-display mb-6">
-                            Wall of <span className="text-gradient-animate">Love</span>
+                            User <span className="text-gradient-animate">Reviews</span>
                         </h1>
                         <p className="text-xl text-muted-foreground">
                             See how students and professionals are using Pathfy to turn their ambitious goals into reality.
                         </p>
                     </div>
 
-                    <Testimonials />
+                    <Reviews />
 
                     <div className="mt-20 max-w-2xl mx-auto p-8 rounded-3xl bg-secondary/30 border border-border text-center">
                         <MessageSquare className="w-12 h-12 text-primary mx-auto mb-4 opacity-50" />

@@ -1,6 +1,6 @@
 import { Star, Quote, User } from "lucide-react";
 
-interface Testimonial {
+interface Review {
     name: string;
     role: string;
     content: string;
@@ -8,7 +8,7 @@ interface Testimonial {
     avatar?: string;
 }
 
-const testimonials: Testimonial[] = [
+const reviews: Review[] = [
     {
         name: "Arjun Mehta",
         role: "Final Year CSE, IIT Delhi",
@@ -39,7 +39,7 @@ const testimonials: Testimonial[] = [
     }
 ];
 
-export function Testimonials() {
+export function Reviews() {
     return (
         <section className="py-20 border-t border-border bg-secondary/5 relative overflow-hidden">
             {/* Decorative elements */}
@@ -56,7 +56,7 @@ export function Testimonials() {
                 </div>
 
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {testimonials.filter(t => t.content && t.content.trim().length > 0).map((t, i) => (
+                    {reviews.filter(t => t.content && t.content.trim().length > 0).map((t, i) => (
                         <div
                             key={i}
                             className="p-6 rounded-2xl card-gradient border border-border flex flex-col justify-between hover:border-primary/30 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 group"
