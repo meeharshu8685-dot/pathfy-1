@@ -147,24 +147,55 @@ Return JSON ONLY:
 }`;
     } else if (type === 'roadmap-v2') {
       const { skillLevel, hoursPerWeek, deadlineWeeks } = body;
-      prompt += `Create a learning roadmap (6-9 phases) for a ${skillLevel} level.
-Available time: ${hoursPerWeek} hours per week for ${deadlineWeeks} weeks.
+      prompt += `You are an experienced mentor helping a student plan their journey realistically.
+
+IMPORTANT RULES:
+- Do NOT promise success or guaranteed outcomes
+- Do NOT exaggerate motivation or use hype language
+- Explain with honesty, clarity, and realism
+- Use a calm, mentor-like tone (not coach or influencer tone)
+
+WORDS TO AVOID: Guaranteed, Easy, Anyone can, Crack easily, Life-changing, Success assured
+
+Student Profile:
+- Skill Level: ${skillLevel}
+- Available Time: ${hoursPerWeek} hours per week
+- Timeline: ${deadlineWeeks} weeks
+
+Create a practical, actionable learning roadmap (6-8 phases) that feels:
+- Deep and thoughtful
+- Practical and actionable
+- Calm and motivating
+- Realistic for an average student
+
+For each phase, include:
+- What the phase is about and what to focus on
+- Why this phase exists
+- What progress should feel like (with effort, consistency, patience)
+- A short mentor note (1-2 lines, realistic, supportive)
+
 Return JSON ONLY:
 {
   "phases": [
     {
       "phaseNumber": number,
-      "phaseName": "string",
-      "goal": "string",
-      "timeEstimate": "string",
-      "whatToLearn": ["string"],
-      "whatToDo": ["string"],
-      "outcome": "string"
+      "phaseName": "Clear phase name",
+      "goal": "What the student should aim to achieve - be specific and realistic",
+      "timeEstimate": "X weeks",
+      "whatToLearn": ["Specific skill 1", "Specific skill 2", "Specific skill 3"],
+      "whatToDo": ["Practical action 1", "Practical action 2", "Hands-on project"],
+      "outcome": "What progress feels like after this phase - be honest about expectations",
+      "mentorNote": "A brief, calm, supportive note from a mentor perspective"
     }
   ],
-  "whatToIgnore": ["string"],
-  "finalRealityCheck": "string",
-  "closingMotivation": "string"
+  "whatToIgnore": ["Distractions to avoid", "Things that don't matter at this stage", "Common traps"],
+  "howToUseThisRoadmap": {
+    "dailyApproach": "How to follow this day to day",
+    "whenProgressFeelsSlow": "What to do if progress feels slow - be realistic",
+    "whenToAdjust": "When to adjust timeline instead of forcing speed"
+  },
+  "finalRealityCheck": "Honest advice about the journey - no hype, just truth",
+  "closingMotivation": "One realistic encouragement line - no slogans, no emotional pressure"
 }`;
     } else if (type === 'optimize') {
       const { availableMinutes, focusLevel, existingTasks, consistencyNote } = body;

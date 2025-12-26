@@ -1,13 +1,21 @@
-import { EyeOff, AlertTriangle, Heart } from "lucide-react";
+import { EyeOff, AlertTriangle, Heart, BookOpen, Clock, RefreshCw } from "lucide-react";
+
+interface HowToUseRoadmap {
+  dailyApproach: string;
+  whenProgressFeelsSlow: string;
+  whenToAdjust: string;
+}
 
 interface RoadmapRealityLayerProps {
   whatToIgnore: string[];
+  howToUseThisRoadmap?: HowToUseRoadmap;
   finalRealityCheck: string;
   closingMotivation: string;
 }
 
 export function RoadmapRealityLayer({
   whatToIgnore,
+  howToUseThisRoadmap,
   finalRealityCheck,
   closingMotivation,
 }: RoadmapRealityLayerProps) {
@@ -33,6 +41,41 @@ export function RoadmapRealityLayer({
           ))}
         </ul>
       </div>
+
+      {/* How to Use This Roadmap */}
+      {howToUseThisRoadmap && (
+        <div className="p-6 rounded-xl bg-blue-500/5 border border-blue-500/30">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center">
+              <BookOpen className="w-5 h-5 text-blue-500" />
+            </div>
+            <h3 className="text-lg font-semibold text-blue-500">How to Use This Roadmap</h3>
+          </div>
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <Clock className="w-4 h-4 text-blue-400 mt-1 flex-shrink-0" />
+              <div>
+                <span className="text-sm font-medium text-blue-400">Day to Day</span>
+                <p className="text-sm text-muted-foreground">{howToUseThisRoadmap.dailyApproach}</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-4 h-4 text-blue-400 mt-1 flex-shrink-0" />
+              <div>
+                <span className="text-sm font-medium text-blue-400">When Progress Feels Slow</span>
+                <p className="text-sm text-muted-foreground">{howToUseThisRoadmap.whenProgressFeelsSlow}</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <RefreshCw className="w-4 h-4 text-blue-400 mt-1 flex-shrink-0" />
+              <div>
+                <span className="text-sm font-medium text-blue-400">When to Adjust</span>
+                <p className="text-sm text-muted-foreground">{howToUseThisRoadmap.whenToAdjust}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Final Reality Check */}
       <div className="p-6 rounded-xl bg-amber-500/5 border border-amber-500/30">

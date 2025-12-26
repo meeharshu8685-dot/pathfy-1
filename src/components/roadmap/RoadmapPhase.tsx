@@ -1,4 +1,4 @@
-import { Target, Clock, BookOpen, Hammer, CheckCircle2, Edit2, Check, X, Plus, Trash2 } from "lucide-react";
+import { Target, Clock, BookOpen, Hammer, CheckCircle2, Edit2, Check, X, Plus, Trash2, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ interface RoadmapPhaseProps {
   whatToLearn: string[];
   whatToDo: string[];
   outcome: string;
+  mentorNote?: string;
   isEditable?: boolean;
   onUpdate?: (updatedPhase: any) => void;
 }
@@ -24,6 +25,7 @@ export function RoadmapPhase({
   whatToLearn: initialWhatToLearn,
   whatToDo: initialWhatToDo,
   outcome: initialOutcome,
+  mentorNote,
   isEditable = true,
   onUpdate,
 }: RoadmapPhaseProps) {
@@ -237,6 +239,16 @@ export function RoadmapPhase({
             <p className="text-sm text-muted-foreground">{initialOutcome}</p>
           </div>
         </div>
+
+        {/* Mentor Note */}
+        {mentorNote && (
+          <div className="mt-4 p-3 rounded-lg bg-primary/5 border border-primary/20">
+            <div className="flex items-start gap-2">
+              <MessageCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-muted-foreground italic">"{mentorNote}"</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
