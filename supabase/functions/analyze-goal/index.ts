@@ -23,8 +23,7 @@ Deno.serve(async (req) => {
 
     console.log(`Processing AI request type: ${type} for goal: ${goal}`);
 
-    let systemPrompt = `You are an expert AI career and learning advisor. Always respond with valid JSON only, no markdown or extra text.`;
-    let userPrompt = `Goal: ${goal}\n`;
+    let prompt = `You are an AI career advisor. Goal: ${goal}\n`;
 
     if (type === 'reality-check-v2') {
       const { field, skillLevel, calibratedSkillLevel, hoursPerWeek, deadlineWeeks } = body;
@@ -34,23 +33,24 @@ Deno.serve(async (req) => {
       const deadlineMonths = Math.round(deadlineWeeks / 4);
 
       if (isCompetitiveExam) {
-        systemPrompt = `You are an expert career advisor familiar with Indian coaching institute preparation models. 
+        // Special prompt for competitive exams - shows preparation paths, not pass/fail
+        prompt += `You are an expert career advisor familiar with Indian coaching institute preparation models.
+Goal: ${goal}
+User's current level: ${calibratedSkillLevel || skillLevel}
+Available time: ${hoursPerWeek} hours/week for ${deadlineMonths} months
+
 CRITICAL RULES:
 1. NEVER use words like "unrealistic", "impossible", or "guaranteed"
 2. ALWAYS present preparation as CHOICES (paths), not verdicts
 3. Use coaching institute terminology that Indian students recognize
 4. Show trade-offs clearly (time, effort, lifestyle, burnout risk)
-Always respond with valid JSON only.`;
-
-        userPrompt += `User's current level: ${calibratedSkillLevel || skillLevel}
-Available time: ${hoursPerWeek} hours/week for ${deadlineMonths} months
 
 For competitive exams, evaluate using these models:
 - If timeline <= 12 months: "Drop-Year / Full-Focus Preparation" (8-10 hrs/day, very high lifestyle trade-off)
 - If timeline >= 24 months: "Long-Term / Sustainable Preparation" (5-6 hrs/day, moderate trade-off)
 - If timeline is 12-24 months: Show BOTH paths and explain trade-offs
 
-Return JSON:
+Return JSON ONLY:
 {
   "feasibilityStatus": "achievable_with_conditions",
   "preparationApproach": "${deadlineMonths <= 12 ? 'drop_year' : deadlineMonths >= 24 ? 'long_term' : 'flexible'}",
@@ -93,9 +93,10 @@ Return JSON:
   }
 }`;
       } else {
-        userPrompt += `Analyze feasibility for a ${skillLevel} in ${field}. 
+        // Original logic for non-exam goals (tech, skills, careers)
+        prompt += `Analyze feasibility for a ${skillLevel} in ${field}. 
 Available: ${hoursPerWeek}h/week for ${deadlineWeeks} weeks.
-Return JSON:
+Return JSON ONLY:
 {
   "feasibilityStatus": "realistic|risky|unrealistic",
   "requiredHours": number,
@@ -118,8 +119,8 @@ Return JSON:
 }`;
       }
     } else if (type === 'decompose') {
-      userPrompt += `Break this goal into atomic tasks (each < 90 mins). 
-Return JSON:
+      prompt += `Break this goal into atomic tasks (each < 90 mins). 
+Return JSON ONLY:
 {
   "phases": [
     {
@@ -146,60 +147,32 @@ Return JSON:
 }`;
     } else if (type === 'roadmap-v2') {
       const { skillLevel, hoursPerWeek, deadlineWeeks } = body;
-
-      systemPrompt = `You are an expert learning mentor and career advisor. You create detailed, actionable learning roadmaps.
-CRITICAL: You MUST return valid JSON only with no additional text, markdown, or formatting.
-The JSON must follow the EXACT structure specified.`;
-
-      userPrompt = `Create a comprehensive learning roadmap for achieving this goal: ${goal}
-
-Learner Profile:
-- Current skill level: ${skillLevel}
-- Weekly time commitment: ${hoursPerWeek} hours
-- Timeline: approximately ${deadlineWeeks} weeks
-
-STRICT REQUIREMENTS:
-1. Create exactly 6 to 8 phases (not more, not less)
-2. Each phase MUST have ALL fields shown in the structure below
-3. whatToLearn and whatToDo arrays MUST each have 3-5 items
-4. Time estimates should add up to roughly ${deadlineWeeks} weeks total
-5. Be specific with skills and tasks - no vague descriptions
-
-Return this EXACT JSON structure:
+      prompt += `Create a learning roadmap (6-9 phases) for a ${skillLevel} level.
+Available time: ${hoursPerWeek} hours per week for ${deadlineWeeks} weeks.
+Return JSON ONLY:
 {
   "phases": [
     {
-      "phaseNumber": 1,
-      "phaseName": "Foundation Setup",
-      "goal": "Specific goal for this phase",
-      "timeEstimate": "2 weeks",
-      "whatToLearn": ["Skill 1", "Skill 2", "Skill 3"],
-      "whatToDo": ["Task 1", "Task 2", "Project 1"],
-      "outcome": "What you can do after completing this phase"
-    },
-    {
-      "phaseNumber": 2,
-      "phaseName": "Core Fundamentals",
-      "goal": "Build on foundation",
-      "timeEstimate": "2 weeks",
-      "whatToLearn": ["Advanced Skill 1", "Advanced Skill 2", "Advanced Skill 3"],
-      "whatToDo": ["Practice Task 1", "Build Project 1", "Exercise 1"],
-      "outcome": "Measurable skill gained"
+      "phaseNumber": number,
+      "phaseName": "string",
+      "goal": "string",
+      "timeEstimate": "string",
+      "whatToLearn": ["string"],
+      "whatToDo": ["string"],
+      "outcome": "string"
     }
   ],
-  "whatToIgnore": ["Distraction 1", "Premature optimization", "Things to avoid"],
-  "finalRealityCheck": "Honest, encouraging advice about the journey",
-  "closingMotivation": "An inspiring message to keep them motivated"
-}
-
-Continue this pattern for all 6-8 phases. Make each phase build on the previous one logically.`;
+  "whatToIgnore": ["string"],
+  "finalRealityCheck": "string",
+  "closingMotivation": "string"
+}`;
     } else if (type === 'optimize') {
       const { availableMinutes, focusLevel, existingTasks, consistencyNote } = body;
-      userPrompt += `User has ${availableMinutes} mins and ${focusLevel}% energy. 
+      prompt += `User has ${availableMinutes} mins and ${focusLevel}% energy. 
 Consistency: ${consistencyNote}.
 Current tasks available: ${JSON.stringify(existingTasks)}.
 Pick the best tasks for today or suggest rest.
-Return JSON:
+Return JSON ONLY:
 {
   "tasks": [
     { "id": "string", "title": "string", "estimatedMinutes": number, "priority": "critical|high|medium|light", "reason": "string", "difficulty": "easy|moderate|challenging" }
@@ -218,7 +191,7 @@ Return JSON:
 
     // Azure OpenAI endpoint
     const azureEndpoint = 'https://roadmap-explaiener-resource.cognitiveservices.azure.com';
-    const deploymentName = 'gpt-4o-mini'; // Your deployment name
+    const deploymentName = 'gpt-4o-mini';
     const apiVersion = '2024-12-01-preview';
     const azureUrl = `${azureEndpoint}/openai/deployments/${deploymentName}/chat/completions?api-version=${apiVersion}`;
 
@@ -236,10 +209,10 @@ Return JSON:
           },
           body: JSON.stringify({
             messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: userPrompt }
+              { role: 'system', content: 'You are an expert AI assistant. Always respond with valid JSON only, no markdown or extra text.' },
+              { role: 'user', content: prompt }
             ],
-            temperature: 0.6,
+            temperature: 0.7,
             max_tokens: 4096,
             response_format: { type: 'json_object' }
           })
@@ -252,7 +225,7 @@ Return JSON:
           // If rate limited or server error, retry
           if (azureResponse.status === 429 || azureResponse.status >= 500) {
             lastError = `Azure OpenAI API error: ${azureResponse.status}`;
-            await new Promise(r => setTimeout(r, 1000 * attempt)); // Exponential backoff
+            await new Promise(r => setTimeout(r, 1000 * attempt));
             continue;
           }
 
@@ -275,11 +248,8 @@ Return JSON:
         try {
           // Parse the JSON response
           let cleaned = content.trim();
-
-          // Remove markdown code blocks if present
           cleaned = cleaned.replace(/```json\n?/g, '').replace(/```\n?/g, '');
 
-          // Try to find JSON object boundaries if the response has extra text
           const jsonStart = cleaned.indexOf('{');
           const jsonEnd = cleaned.lastIndexOf('}');
           if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
