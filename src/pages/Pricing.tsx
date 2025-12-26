@@ -1,12 +1,9 @@
-import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { TokenDisplay } from "@/components/shared/TokenDisplay";
-import { Check, Zap, Star, Rocket, Loader2 } from "lucide-react";
-import { useRazorpay } from "@/hooks/useRazorpay";
+import { Check, Zap, Star, Rocket, Clock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { PromoCodeSection } from "@/components/pricing/PromoCodeSection";
 
 const plans = [
   {
@@ -40,11 +37,10 @@ const plans = [
       "Consistency Tracking",
       "Priority Support",
     ],
-    cta: "Buy Growth",
+    cta: "Coming Soon",
     variant: "hero" as const,
     popular: true,
     isPaid: true,
-    paymentLink: "https://rzp.io/rzp/P131upnF", // External Razorpay Payment Link
   },
   {
     id: "pack_60",
@@ -58,11 +54,10 @@ const plans = [
       "Priority execution logic",
       "Custom optimization",
     ],
-    cta: "Buy Pro",
+    cta: "Coming Soon",
     variant: "outline" as const,
     popular: false,
     isPaid: true,
-    paymentLink: "https://rzp.io/rzp/Yct4rgA1", // External Razorpay Payment Link
   },
 ];
 
@@ -75,41 +70,21 @@ const tokenCosts = [
 ];
 
 export default function Pricing() {
-  const { initiatePayment, isProcessing } = useRazorpay();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [processingId, setProcessingId] = useState<string | null>(null);
 
   const handlePlanClick = (plan: typeof plans[0]) => {
+    if (plan.isPaid) {
+      // Paid plans are coming soon - do nothing
+      return;
+    }
+
+    // Free plan - redirect to dashboard or login
     if (!user) {
       navigate("/login");
       return;
     }
-
-    if (plan.isPaid) {
-      // Check if this plan has an external payment link (Growth Plan)
-      if ('paymentLink' in plan && plan.paymentLink) {
-        // Redirect to Razorpay Payment Link with user email prefilled
-        const paymentUrl = new URL(plan.paymentLink);
-        if (user.email) {
-          paymentUrl.searchParams.set('prefill[email]', user.email);
-        }
-        // Open in same window so user can return after payment
-        window.location.href = paymentUrl.toString();
-        return;
-      }
-
-      // For other paid plans, use the API-based checkout
-      setProcessingId(plan.id);
-      initiatePayment({
-        id: plan.id,
-        name: plan.name,
-        price: plan.price,
-        tokens: plan.tokens,
-      });
-    } else {
-      navigate("/dashboard");
-    }
+    navigate("/dashboard");
   };
 
   return (
@@ -177,12 +152,12 @@ export default function Pricing() {
                   variant={plan.variant}
                   className="w-full"
                   onClick={() => handlePlanClick(plan)}
-                  disabled={isProcessing}
+                  disabled={plan.isPaid}
                 >
-                  {isProcessing && processingId === plan.id ? (
+                  {plan.isPaid ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Processing...
+                      <Clock className="w-4 h-4 mr-2" />
+                      Coming Soon
                     </>
                   ) : (
                     plan.cta
@@ -210,9 +185,14 @@ export default function Pricing() {
               </div>
             </div>
 
-            {/* Promo Code Section */}
-            <div className="mt-8">
-              <PromoCodeSection />
+            {/* Coming Soon Notice */}
+            <div className="mt-8 p-6 rounded-xl bg-primary/10 border border-primary/30 text-center">
+              <Clock className="w-8 h-8 text-primary mx-auto mb-3" />
+              <h3 className="text-lg font-semibold mb-2">Payment Gateway Coming Soon</h3>
+              <p className="text-sm text-muted-foreground">
+                We're working on integrating our payment system. Stay tuned for updates!
+                You can still use your free tokens to explore all features.
+              </p>
             </div>
 
             {/* Bonus */}

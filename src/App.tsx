@@ -20,8 +20,6 @@ import Disclaimer from "./pages/Disclaimer";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import Help from "./pages/Help";
-import PaymentHistory from "./pages/PaymentHistory";
-import PaymentSuccess from "./pages/PaymentSuccess";
 
 
 const queryClient = new QueryClient();
@@ -47,8 +45,6 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/payment-history" element={<PaymentHistory />} />
-            <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/disclaimer" element={<Disclaimer />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
