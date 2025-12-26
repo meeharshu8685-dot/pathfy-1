@@ -53,7 +53,7 @@ export function Footer() {
           <p>© {new Date().getFullYear()} Pathly. Built for execution, not excuses.</p>
           <p className="text-xs opacity-70">
             Built by <span className="text-primary hover:underline cursor-default">Harsh Vishwakarma</span>,
-            with inputs from <span className="text-primary hover:underline cursor-default">Abhishek Vishwakarma</span>.
+            with inputs from <span className="text-primary hover:underline cursor-default">Abhishek Gaud</span>.
           </p>
         </div>
       </div>
