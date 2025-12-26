@@ -84,7 +84,7 @@ export function ReviewModal({ isOpen, onClose }: ReviewModalProps) {
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="fixed left-[50%] top-[50%] z-50 w-[95vw] max-w-md translate-x-[-50%] translate-y-[-50%] bg-background border-border p-6 rounded-3xl shadow-2xl duration-200 max-h-[90dvh] overflow-y-auto">
+            <DialogContent className="fixed left-1/2 top-1/2 z-50 w-[95vw] max-w-md -translate-x-1/2 -translate-y-1/2 bg-background border-border p-6 rounded-3xl shadow-2xl duration-200 max-h-[90dvh] overflow-y-auto focus-visible:outline-none">
                 <DialogHeader>
                     <DialogTitle className="text-xl md:text-2xl font-bold">Review Your Experience</DialogTitle>
                     <DialogDescription>
