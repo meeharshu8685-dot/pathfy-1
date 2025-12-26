@@ -44,6 +44,22 @@ const faqs = [
     answer:
       "Yes. We don't share or sell your data. You can delete your account anytime from Settings.",
   },
+  {
+    question: "How can I stay updated?",
+    answer: (
+      <span>
+        Follow us on Instagram for tips, updates, and more: {" "}
+        <a
+          href="https://www.instagram.com/pathly.g?igsh=MThoN2Z5OHF0cHVzcQ=="
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary hover:underline font-medium"
+        >
+          @pathly.g
+        </a>
+      </span>
+    ),
+  },
 ];
 
 const Help = () => {
