@@ -10,10 +10,10 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const apiKey = Deno.env.get('GEMINI_API_KEY');
+    const apiKey = Deno.env.get('AZURE_OPENAI_API_KEY');
     if (!apiKey) {
       return new Response(
-        JSON.stringify({ error: 'GEMINI_API_KEY not configured' }),
+        JSON.stringify({ error: 'AZURE_OPENAI_API_KEY not configured' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -23,7 +23,8 @@ Deno.serve(async (req) => {
 
     console.log(`Processing AI request type: ${type} for goal: ${goal}`);
 
-    let prompt = `You are an AI career advisor. Goal: ${goal}\n`;
+    let systemPrompt = `You are an expert AI career and learning advisor. Always respond with valid JSON only, no markdown or extra text.`;
+    let userPrompt = `Goal: ${goal}\n`;
 
     if (type === 'reality-check-v2') {
       const { field, skillLevel, calibratedSkillLevel, hoursPerWeek, deadlineWeeks } = body;
@@ -33,24 +34,23 @@ Deno.serve(async (req) => {
       const deadlineMonths = Math.round(deadlineWeeks / 4);
 
       if (isCompetitiveExam) {
-        // Special prompt for competitive exams - shows preparation paths, not pass/fail
-        prompt += `You are an expert career advisor familiar with Indian coaching institute preparation models.
-Goal: ${goal}
-User's current level: ${calibratedSkillLevel || skillLevel}
-Available time: ${hoursPerWeek} hours/week for ${deadlineMonths} months
-
+        systemPrompt = `You are an expert career advisor familiar with Indian coaching institute preparation models. 
 CRITICAL RULES:
 1. NEVER use words like "unrealistic", "impossible", or "guaranteed"
 2. ALWAYS present preparation as CHOICES (paths), not verdicts
 3. Use coaching institute terminology that Indian students recognize
 4. Show trade-offs clearly (time, effort, lifestyle, burnout risk)
+Always respond with valid JSON only.`;
+
+        userPrompt += `User's current level: ${calibratedSkillLevel || skillLevel}
+Available time: ${hoursPerWeek} hours/week for ${deadlineMonths} months
 
 For competitive exams, evaluate using these models:
 - If timeline <= 12 months: "Drop-Year / Full-Focus Preparation" (8-10 hrs/day, very high lifestyle trade-off)
 - If timeline >= 24 months: "Long-Term / Sustainable Preparation" (5-6 hrs/day, moderate trade-off)
 - If timeline is 12-24 months: Show BOTH paths and explain trade-offs
 
-Return JSON ONLY:
+Return JSON:
 {
   "feasibilityStatus": "achievable_with_conditions",
   "preparationApproach": "${deadlineMonths <= 12 ? 'drop_year' : deadlineMonths >= 24 ? 'long_term' : 'flexible'}",
@@ -93,10 +93,9 @@ Return JSON ONLY:
   }
 }`;
       } else {
-        // Original logic for non-exam goals (tech, skills, careers)
-        prompt += `Analyze feasibility for a ${skillLevel} in ${field}. 
+        userPrompt += `Analyze feasibility for a ${skillLevel} in ${field}. 
 Available: ${hoursPerWeek}h/week for ${deadlineWeeks} weeks.
-Return JSON ONLY:
+Return JSON:
 {
   "feasibilityStatus": "realistic|risky|unrealistic",
   "requiredHours": number,
@@ -119,8 +118,8 @@ Return JSON ONLY:
 }`;
       }
     } else if (type === 'decompose') {
-      prompt += `Break this goal into atomic tasks (each < 90 mins). 
-Return JSON ONLY:
+      userPrompt += `Break this goal into atomic tasks (each < 90 mins). 
+Return JSON:
 {
   "phases": [
     {
@@ -147,7 +146,7 @@ Return JSON ONLY:
 }`;
     } else if (type === 'roadmap-v2') {
       const { skillLevel, hoursPerWeek, deadlineWeeks } = body;
-      prompt += `Create a detailed, practical learning roadmap for a ${skillLevel} level learner.
+      userPrompt += `Create a detailed, practical learning roadmap for a ${skillLevel} level learner.
 Available time: ${hoursPerWeek} hours per week for approximately ${deadlineWeeks} weeks.
 
 IMPORTANT INSTRUCTIONS:
@@ -157,7 +156,7 @@ IMPORTANT INSTRUCTIONS:
 4. Include specific skills, resources, and projects
 5. Make sure JSON is valid and complete
 
-Return ONLY valid JSON in this exact format:
+Return JSON:
 {
   "phases": [
     {
@@ -176,11 +175,11 @@ Return ONLY valid JSON in this exact format:
 }`;
     } else if (type === 'optimize') {
       const { availableMinutes, focusLevel, existingTasks, consistencyNote } = body;
-      prompt += `User has ${availableMinutes} mins and ${focusLevel}% energy. 
+      userPrompt += `User has ${availableMinutes} mins and ${focusLevel}% energy. 
 Consistency: ${consistencyNote}.
 Current tasks available: ${JSON.stringify(existingTasks)}.
 Pick the best tasks for today or suggest rest.
-Return JSON ONLY:
+Return JSON:
 {
   "tasks": [
     { "id": "string", "title": "string", "estimatedMinutes": number, "priority": "critical|high|medium|light", "reason": "string", "difficulty": "easy|moderate|challenging" }
@@ -197,7 +196,11 @@ Return JSON ONLY:
       });
     }
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    // Azure OpenAI endpoint
+    const azureEndpoint = 'https://roadmap-explaiener-resource.cognitiveservices.azure.com';
+    const deploymentName = 'gpt-4o-mini'; // Your deployment name
+    const apiVersion = '2024-12-01-preview';
+    const azureUrl = `${azureEndpoint}/openai/deployments/${deploymentName}/chat/completions?api-version=${apiVersion}`;
 
     // Retry logic for transient failures
     let lastError = null;
@@ -205,61 +208,56 @@ Return JSON ONLY:
       try {
         console.log(`Attempt ${attempt} for ${type}`);
 
-        const geminiResponse = await fetch(geminiUrl, {
+        const azureResponse = await fetch(azureUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'api-key': apiKey
+          },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            safetySettings: [
-              { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-              { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-              { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-              { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt }
             ],
-            generationConfig: {
-              temperature: 0.6, // Slightly lower for more consistent output
-              responseMimeType: 'application/json',
-              maxOutputTokens: 8192
-            }
+            temperature: 0.6,
+            max_tokens: 4096,
+            response_format: { type: 'json_object' }
           })
         });
 
-        if (!geminiResponse.ok) {
-          const errorText = await geminiResponse.text();
-          console.error(`Gemini API Error [${geminiResponse.status}] Attempt ${attempt}:`, errorText);
+        if (!azureResponse.ok) {
+          const errorText = await azureResponse.text();
+          console.error(`Azure OpenAI API Error [${azureResponse.status}] Attempt ${attempt}:`, errorText);
 
           // If rate limited or server error, retry
-          if (geminiResponse.status === 429 || geminiResponse.status >= 500) {
-            lastError = `Gemini API error: ${geminiResponse.status}`;
+          if (azureResponse.status === 429 || azureResponse.status >= 500) {
+            lastError = `Azure OpenAI API error: ${azureResponse.status}`;
             await new Promise(r => setTimeout(r, 1000 * attempt)); // Exponential backoff
             continue;
           }
 
-          return new Response(JSON.stringify({ error: 'Gemini API failed', details: errorText, status: geminiResponse.status }), {
+          return new Response(JSON.stringify({ error: 'Azure OpenAI API failed', details: errorText, status: azureResponse.status }), {
             status: 502,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         }
 
-        const data = await geminiResponse.json();
-        const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        const data = await azureResponse.json();
+        const content = data.choices?.[0]?.message?.content;
 
         if (!content) {
-          console.error('Empty content from Gemini, attempt', attempt);
+          console.error('Empty content from Azure OpenAI, attempt', attempt);
           lastError = 'Empty response from AI';
           continue;
         }
 
         let result;
         try {
-          // More robust JSON extraction
-          let cleaned = content;
+          // Parse the JSON response
+          let cleaned = content.trim();
 
           // Remove markdown code blocks if present
           cleaned = cleaned.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-
-          // Trim whitespace
-          cleaned = cleaned.trim();
 
           // Try to find JSON object boundaries if the response has extra text
           const jsonStart = cleaned.indexOf('{');
@@ -311,4 +309,3 @@ Return JSON ONLY:
     });
   }
 });
-
