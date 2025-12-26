@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { ShareEarnSection } from "@/components/pricing/ShareEarnSection";
 
 const plans = [
   {
@@ -278,6 +279,9 @@ export default function Pricing() {
                 </Button>
               </div>
             </div>
+
+            {/* Refer & Earn Section */}
+            <ShareEarnSection />
 
             {/* Coming Soon Notice */}
             <div className="mt-8 p-6 rounded-xl bg-primary/10 border border-primary/30 text-center">
