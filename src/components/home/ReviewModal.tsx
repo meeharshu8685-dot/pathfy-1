@@ -84,68 +84,89 @@ export function ReviewModal({ isOpen, onClose }: ReviewModalProps) {
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="fixed left-1/2 top-1/2 z-50 w-[95vw] max-w-md -translate-x-1/2 -translate-y-1/2 bg-background border-border p-6 rounded-3xl shadow-2xl duration-200 max-h-[90dvh] overflow-y-auto focus-visible:outline-none">
-                <DialogHeader>
-                    <DialogTitle className="text-xl md:text-2xl font-bold">Review Your Experience</DialogTitle>
-                    <DialogDescription>
-                        We'd love to hear how Pathfy has helped you!
-                    </DialogDescription>
-                </DialogHeader>
+            <DialogContent
+                className="w-[92vw] max-w-lg p-0 bg-background border-border overflow-hidden rounded-[2rem] shadow-2xl transition-all"
+            >
+                <div className="max-h-[85vh] overflow-y-auto outline-none p-6 md:p-8">
+                    <DialogHeader className="mb-8 text-left">
+                        <DialogTitle className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+                            Review Your <span className="text-primary">Experience</span>
+                        </DialogTitle>
+                        <DialogDescription className="text-base text-muted-foreground mt-2">
+                            We'd love to hear how Pathfy has helped you achieve your goals!
+                        </DialogDescription>
+                    </DialogHeader>
 
-                <div className="space-y-6 py-4">
-                    <div className="flex flex-col gap-2">
-                        <label className="text-sm font-medium">Rating</label>
-                        <div className="flex gap-2">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                                <button
-                                    key={star}
-                                    onClick={() => setRating(star)}
-                                    className="transition-transform active:scale-95"
-                                >
-                                    <Star
-                                        className={`w-8 h-8 ${star <= rating
-                                            ? "fill-primary text-primary"
-                                            : "text-muted-foreground/30"
-                                            }`}
-                                    />
-                                </button>
-                            ))}
+                    <div className="space-y-8 pb-4">
+                        <div className="space-y-3">
+                            <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/80">
+                                How would you rate us?
+                            </label>
+                            <div className="flex gap-3">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <button
+                                        key={star}
+                                        onClick={() => setRating(star)}
+                                        className="transform transition-all active:scale-90 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-full"
+                                        aria-label={`Rate ${star} stars`}
+                                    >
+                                        <Star
+                                            className={`w-10 h-10 ${star <= rating
+                                                ? "fill-primary text-primary drop-shadow-[0_0_8px_rgba(124,58,237,0.3)]"
+                                                : "text-muted-foreground/20"
+                                                }`}
+                                        />
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <label htmlFor="role-input" className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/80">
+                                Your Role / Headline
+                            </label>
+                            <Input
+                                id="role-input"
+                                placeholder="e.g. Student, SDE, Project Manager"
+                                value={role}
+                                onChange={(e) => setRole(e.target.value)}
+                                className="h-12 bg-secondary/30 border-border/50 focus:bg-secondary/50 transition-colors rounded-xl font-medium"
+                            />
+                        </div>
+
+                        <div className="space-y-3">
+                            <label htmlFor="review-text" className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/80">
+                                Your Review
+                            </label>
+                            <Textarea
+                                id="review-text"
+                                placeholder="Share your success story or feedback with the community..."
+                                value={comment}
+                                onChange={(e) => setComment(e.target.value)}
+                                className="min-h-[140px] bg-secondary/30 border-border/50 focus:bg-secondary/50 transition-colors rounded-xl resize-none py-4 font-medium"
+                            />
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Your Role / Headline</label>
-                        <Input
-                            placeholder="e.g. Student, SDE, Project Manager"
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
-                            className="bg-secondary/50 border-border"
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Your Review</label>
-                        <Textarea
-                            placeholder="Tell us about your success story or feedback..."
-                            value={comment}
-                            onChange={(e) => setComment(e.target.value)}
-                            className="min-h-[120px] bg-secondary/50 border-border"
-                        />
+                    <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-border mt-4">
+                        <Button
+                            variant="primary"
+                            onClick={handleSubmit}
+                            disabled={isSubmitting}
+                            className="flex-1 h-12 text-lg font-bold rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                        >
+                            {isSubmitting ? "Submitting..." : "Post Review"}
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            onClick={onClose}
+                            disabled={isSubmitting}
+                            className="h-12 text-muted-foreground font-medium rounded-xl hover:bg-secondary/50"
+                        >
+                            Maybe Later
+                        </Button>
                     </div>
                 </div>
-
-                <DialogFooter className="flex gap-2 sm:gap-0">
-                    <Button variant="ghost" onClick={onClose} disabled={isSubmitting}>
-                        Cancel
-                    </Button>
-                    <Button
-                        onClick={handleSubmit}
-                        disabled={isSubmitting}
-                        className="bg-primary text-primary-foreground hover:opacity-90"
-                    >
-                        {isSubmitting ? "Submitting..." : "Submit Review"}
-                    </Button>
-                </DialogFooter>
             </DialogContent>
         </Dialog>
     );
