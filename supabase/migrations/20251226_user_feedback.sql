@@ -4,6 +4,8 @@ CREATE TABLE IF NOT EXISTS public.user_feedback (
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
     user_name TEXT NOT NULL,
     avatar_url TEXT,
+    role TEXT,
+    rating INTEGER CHECK (rating >= 1 AND rating <= 5),
     feature TEXT NOT NULL,
     flag TEXT NOT NULL CHECK (flag IN ('good', 'very_good', 'excellent', 'issue')),
     feedback_text TEXT,

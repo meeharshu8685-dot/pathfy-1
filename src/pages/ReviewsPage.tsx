@@ -1,8 +1,13 @@
+import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Reviews } from "@/components/home/Reviews";
 import { Star, MessageSquare } from "lucide-react";
+import { ReviewModal } from "@/components/home/ReviewModal";
+import { Button } from "@/components/ui/button";
 
 export default function ReviewsPage() {
+    const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+
     return (
         <Layout>
             <div className="pt-20 pb-12">
@@ -28,13 +33,18 @@ export default function ReviewsPage() {
                         <p className="text-muted-foreground mb-6">
                             We'd love to hear how Pathfy has helped you achieve your goals. Your feedback helps us build a better tool for everyone.
                         </p>
-                        <a
-                            href="mailto:support@pathfy.com?subject=Success Story"
+                        <Button
+                            onClick={() => setIsReviewModalOpen(true)}
                             className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
                         >
-                            Share Your Story
-                        </a>
+                            Review Us
+                        </Button>
                     </div>
+
+                    <ReviewModal
+                        isOpen={isReviewModalOpen}
+                        onClose={() => setIsReviewModalOpen(false)}
+                    />
                 </div>
             </div>
         </Layout>

@@ -537,6 +537,51 @@ export type Database = {
         }
         Relationships: []
       }
+      user_feedback: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          eligible_for_testimonial: boolean
+          feature: string
+          feedback_text: string | null
+          flag: string
+          id: string
+          rating: number | null
+          role: string | null
+          show_in_testimonial: boolean
+          user_id: string
+          user_name: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          eligible_for_testimonial: boolean
+          feature: string
+          feedback_text?: string | null
+          flag: string
+          id?: string
+          rating?: number | null
+          role?: string | null
+          show_in_testimonial?: boolean
+          user_id: string
+          user_name: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          eligible_for_testimonial?: boolean
+          feature?: string
+          feedback_text?: string | null
+          flag?: string
+          id?: string
+          rating?: number | null
+          role?: string | null
+          show_in_testimonial?: boolean
+          user_id?: string
+          user_name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
