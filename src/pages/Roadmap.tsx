@@ -311,6 +311,9 @@ export default function Roadmap() {
                         </>
                       )}
                     </Button>
+                    <p className="text-xs text-muted-foreground text-center mt-3">
+                      ⏱️ This may take 15-30 seconds as we craft your personalized roadmap
+                    </p>
                   </div>
                 ) : (
                   <div className="text-center py-8">
