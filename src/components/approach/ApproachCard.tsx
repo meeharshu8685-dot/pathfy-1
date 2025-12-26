@@ -46,8 +46,8 @@ export function ApproachCard({ evaluation, isSelected, onSelect }: ApproachCardP
     return (
         <Card
             className={`relative transition-all duration-200 cursor-pointer ${isSelected
-                    ? 'ring-2 ring-primary border-primary bg-primary/5'
-                    : statusConfig.bgClass
+                ? 'ring-2 ring-primary border-primary bg-primary/5'
+                : statusConfig.bgClass
                 }`}
             onClick={onSelect}
         >
@@ -74,28 +74,28 @@ export function ApproachCard({ evaluation, isSelected, onSelect }: ApproachCardP
             <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground">{approach.description}</p>
 
-                <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="grid grid-cols-2 gap-x-2 gap-y-3 sm:gap-4 text-xs sm:text-sm">
                     <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-muted-foreground" />
+                        <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
                         <span>{approach.durationRange}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Zap className="w-4 h-4 text-muted-foreground" />
+                        <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
                         <span>{approach.dailyEffortRange}/day</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Activity className="w-4 h-4 text-muted-foreground" />
-                        <span className="capitalize">{approach.lifestyleTradeOff.replace('_', ' ')} trade-off</span>
+                        <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
+                        <span className="capitalize text-[10px] sm:text-sm">{approach.lifestyleTradeOff.replace('_', ' ')}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-muted-foreground" />
+                        <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
                         <span className="capitalize">{riskLevel} risk</span>
                     </div>
                 </div>
 
                 <div className="pt-3 border-t border-border">
-                    <p className="text-xs text-muted-foreground font-medium mb-1">Who this suits:</p>
-                    <p className="text-sm">{approach.whoThisSuits}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Best for:</p>
+                    <p className="text-xs sm:text-sm leading-relaxed">{approach.whoThisSuits}</p>
                 </div>
 
                 {reasoning && (

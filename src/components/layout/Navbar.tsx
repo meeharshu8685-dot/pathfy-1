@@ -161,7 +161,7 @@ export function Navbar() {
                   <Button
                     variant="ghost"
                     className={cn(
-                      "w-full justify-start transition-all duration-300",
+                      "w-full justify-start transition-all duration-300 h-11",
                       location.pathname === link.href
                         ? "bg-primary/10 text-primary hover:bg-primary/15 px-4"
                         : "hover:bg-secondary/50 text-muted-foreground"
@@ -175,16 +175,34 @@ export function Navbar() {
               {user ? (
                 <>
                   <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
-                    <Button variant="outline" className="w-full">
+                    <Button variant="outline" className="w-full h-11 mb-2">
                       Dashboard
                     </Button>
                   </Link>
                   <Link to="/profile" onClick={() => setMobileOpen(false)}>
-                    <Button variant="ghost" className="w-full">
+                    <Button variant="ghost" className="w-full justify-start h-11 mb-2">
+                      <User className="w-4 h-4 mr-2" />
                       Profile
                     </Button>
                   </Link>
-                  <Button variant="ghost" className="w-full justify-start" onClick={() => { handleSignOut(); setMobileOpen(false); }}>
+                  <Link to="/pricing" onClick={() => setMobileOpen(false)}>
+                    <Button variant="ghost" className="w-full justify-start h-11 mb-2">
+                      <Zap className="w-4 h-4 mr-2" />
+                      Get Tokens
+                    </Button>
+                  </Link>
+                  <Link to="/payment-history" onClick={() => setMobileOpen(false)}>
+                    <Button variant="ghost" className="w-full justify-start h-11 mb-2">
+                      <Receipt className="w-4 h-4 mr-2" />
+                      Payment History
+                    </Button>
+                  </Link>
+                  <div className="border-t border-border my-2" />
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start h-11 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => { handleSignOut(); setMobileOpen(false); }}
+                  >
                     <LogOut className="w-4 h-4 mr-2" />
                     Sign Out
                   </Button>
@@ -192,12 +210,12 @@ export function Navbar() {
               ) : (
                 <>
                   <Link to="/login" onClick={() => setMobileOpen(false)}>
-                    <Button variant="outline" className="w-full">
+                    <Button variant="outline" className="w-full h-11 mb-2">
                       Sign In
                     </Button>
                   </Link>
                   <Link to="/signup" onClick={() => setMobileOpen(false)}>
-                    <Button variant="hero" className="w-full">
+                    <Button variant="hero" className="w-full h-11">
                       Get Started
                     </Button>
                   </Link>

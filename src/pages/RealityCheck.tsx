@@ -372,20 +372,22 @@ export default function RealityCheck() {
     <Layout>
       <div className="container max-w-3xl px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
         {/* Header */}
-        <div className="text-center space-y-3 animate-fade-in">
+        <div className="text-center space-y-4 sm:space-y-5 animate-fade-in mb-8">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium">
             <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             Path Feasibility
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-display">Achievement Planner</h1>
-          <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
-            Get an honest, data-driven analysis of your career goals
-          </p>
+          <div>
+            <h1 className="text-2xl sm:text-4xl font-bold font-display tracking-tight mb-2">Achievement Planner</h1>
+            <p className="text-sm sm:text-lg text-muted-foreground max-w-lg mx-auto">
+              Get an honest, data-driven analysis of your career goals
+            </p>
+          </div>
           {user && (
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mt-4">
-              <div className="inline-flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
-                <Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                Your tokens: {tokens}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 pt-2">
+              <div className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-muted-foreground bg-secondary/30 px-3 py-1.5 rounded-lg border border-border/50">
+                <Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
+                <span>Tokens: {tokens}</span>
               </div>
               <TokenDisplay tokens={TOKEN_COST} size="sm" />
             </div>

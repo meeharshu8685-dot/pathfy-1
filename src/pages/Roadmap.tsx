@@ -8,7 +8,7 @@ import { RoadmapPhase } from "@/components/roadmap/RoadmapPhase";
 import { RoadmapRealityLayer } from "@/components/roadmap/RoadmapRealityLayer";
 import { RoadmapPDFExport } from "@/components/roadmap/RoadmapPDFExport";
 import { RoadmapPrerequisiteCheck } from "@/components/roadmap/RoadmapPrerequisiteCheck";
-import { Map, Zap, Coins, RotateCcw } from "lucide-react";
+import { Map, Zap, Coins, RotateCcw, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTokens } from "@/hooks/useTokens";
@@ -219,22 +219,22 @@ export default function Roadmap() {
       <div className="py-12">
         <div className="container mx-auto px-4">
           {/* ... (Header section remains same) */}
-          <div className="max-w-3xl mx-auto text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary border border-border mb-6">
-              <Map className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium">Roadmap Generator</span>
-              <TokenDisplay tokens={TOKEN_COST} size="sm" className="ml-2" />
+          <div className="max-w-3xl mx-auto text-center mb-8 sm:mb-16 space-y-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-secondary border border-border">
+              <Map className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
+              <span className="text-xs sm:text-sm font-medium">Roadmap Generator</span>
+              <TokenDisplay tokens={TOKEN_COST} size="sm" className="ml-1 sm:ml-2 scale-90 sm:scale-100" />
             </div>
-            <h1 className="text-4xl font-bold mb-4">
+            <h1 className="text-2xl sm:text-5xl font-bold font-display tracking-tight leading-tight px-2">
               Your <span className="gradient-text">Mentor-Written</span> Roadmap
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm sm:text-lg text-muted-foreground max-w-lg mx-auto px-4">
               A calm, realistic learning path written by someone who's been there before.
             </p>
             {user && (
-              <div className="mt-4 inline-flex items-center gap-2 text-sm text-muted-foreground">
-                <Coins className="w-4 h-4" />
-                Your tokens: {tokens}
+              <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-muted-foreground bg-secondary/30 w-fit mx-auto px-3 py-1 rounded-full border border-border/50">
+                <Coins className="w-3.5 h-3.5 text-primary" />
+                <span>Tokens: {tokens}</span>
               </div>
             )}
           </div>
@@ -331,22 +331,26 @@ export default function Roadmap() {
               <div className="animate-slide-up space-y-6">
                 {/* Roadmap Header */}
                 <div className="p-6 rounded-xl card-gradient border border-border">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h2 className="text-xl font-bold">{currentGoal?.title}</h2>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {roadmap.phases.length} phases • {currentGoal?.hours_per_week}h/week • {deadlineWeeks} weeks
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                    <div className="space-y-1">
+                      <h2 className="text-lg sm:text-xl font-bold font-display">{currentGoal?.title}</h2>
+                      <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-3">
+                        <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-md font-medium">{roadmap.phases.length} phases</span>
+                        <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {deadlineWeeks} weeks</span>
+                        <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5" /> {currentGoal?.hours_per_week}h/week</span>
                       </p>
                     </div>
-                    <RoadmapPDFExport
-                      goalTitle={currentGoal?.title || "Goal"}
-                      duration={`${deadlineWeeks} weeks`}
-                      hoursPerWeek={currentGoal?.hours_per_week || 10}
-                      phases={roadmap.phases}
-                      whatToIgnore={roadmap.whatToIgnore}
-                      finalRealityCheck={roadmap.finalRealityCheck}
-                      closingMotivation={roadmap.closingMotivation}
-                    />
+                    <div className="sm:ml-auto">
+                      <RoadmapPDFExport
+                        goalTitle={currentGoal?.title || "Goal"}
+                        duration={`${deadlineWeeks} weeks`}
+                        hoursPerWeek={currentGoal?.hours_per_week || 10}
+                        phases={roadmap.phases}
+                        whatToIgnore={roadmap.whatToIgnore}
+                        finalRealityCheck={roadmap.finalRealityCheck}
+                        closingMotivation={roadmap.closingMotivation}
+                      />
+                    </div>
                   </div>
                 </div>
 

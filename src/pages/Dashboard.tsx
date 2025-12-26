@@ -45,7 +45,7 @@ export default function Dashboard() {
 
   const userStats = {
     tokens: profile?.tokens ?? 0,
-    maxTokens: 50,
+    maxTokens: profile?.max_tokens ?? 50,
     streak: profile?.current_streak ?? 0,
     tasksCompleted: profile?.completed_goals ?? 0,
     hoursLogged: profile?.total_hours_logged ?? 0,
@@ -69,17 +69,19 @@ export default function Dashboard() {
       <div className="py-12">
         <div className="container mx-auto px-4">
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-            <div>
-              <h1 className="text-3xl font-bold mb-1">Execution Dashboard</h1>
-              <p className="text-muted-foreground">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 sm:mb-12">
+            <div className="space-y-1">
+              <h1 className="text-2xl sm:text-3xl font-bold font-display">Execution Dashboard</h1>
+              <p className="text-sm sm:text-base text-muted-foreground">
                 Welcome back, {profile?.display_name || profile?.full_name || user.email?.split("@")[0]}
               </p>
             </div>
             {isLoading ? (
               <Skeleton className="h-10 w-32" />
             ) : (
-              <TokenDisplay tokens={userStats.tokens} maxTokens={userStats.maxTokens} size="lg" />
+              <div className="flex justify-start md:justify-end">
+                <TokenDisplay tokens={userStats.tokens} maxTokens={userStats.maxTokens} size="lg" />
+              </div>
             )}
           </div>
 
