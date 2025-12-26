@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Zap, Menu, X, User, LogOut, Receipt } from "lucide-react";
 import { useState } from "react";
@@ -54,9 +55,14 @@ export function Navbar() {
             {navLinks.map((link) => (
               <Link key={link.href} to={link.href}>
                 <Button
-                  variant={location.pathname === link.href ? "secondary" : "ghost"}
+                  variant="ghost"
                   size="sm"
-                  className="text-sm"
+                  className={cn(
+                    "text-sm transition-all duration-300",
+                    location.pathname === link.href
+                      ? "bg-primary/10 text-primary hover:bg-primary/15"
+                      : "hover:bg-secondary/80 text-muted-foreground hover:text-foreground"
+                  )}
                 >
                   {link.label}
                 </Button>
@@ -153,8 +159,13 @@ export function Navbar() {
                   onClick={() => setMobileOpen(false)}
                 >
                   <Button
-                    variant={location.pathname === link.href ? "secondary" : "ghost"}
-                    className="w-full justify-start"
+                    variant="ghost"
+                    className={cn(
+                      "w-full justify-start transition-all duration-300",
+                      location.pathname === link.href
+                        ? "bg-primary/10 text-primary hover:bg-primary/15 px-4"
+                        : "hover:bg-secondary/50 text-muted-foreground"
+                    )}
                   >
                     {link.label}
                   </Button>
