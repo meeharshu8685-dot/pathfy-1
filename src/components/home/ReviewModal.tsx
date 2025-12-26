@@ -85,7 +85,7 @@ export function ReviewModal({ isOpen, onClose }: ReviewModalProps) {
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent
-                className="w-[92vw] max-w-lg p-0 bg-background border-border overflow-hidden rounded-[2rem] shadow-2xl transition-all"
+                className="fixed left-1/2 top-4 md:top-8 z-50 w-[92vw] max-w-lg -translate-x-1/2 p-0 bg-background border-border overflow-hidden rounded-[2rem] shadow-2xl transition-all"
             >
                 <div className="max-h-[85vh] overflow-y-auto outline-none p-6 md:p-8">
                     <DialogHeader className="mb-8 text-left">
