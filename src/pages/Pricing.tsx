@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { useTokens } from "@/hooks/useTokens";
+import { useQueryClient } from "@tanstack/react-query";
 
 const plans = [
   {
@@ -77,7 +77,7 @@ const tokenCosts = [
 export default function Pricing() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { refetch: refetchTokens } = useTokens();
+  const queryClient = useQueryClient();
   const [promoCode, setPromoCode] = useState("");
   const [isRedeeming, setIsRedeeming] = useState(false);
 
@@ -136,7 +136,7 @@ export default function Pricing() {
           description: data.message,
         });
         setPromoCode("");
-        refetchTokens();
+        queryClient.invalidateQueries({ queryKey: ["profile"] });
       }
     } catch (error: any) {
       toast({
