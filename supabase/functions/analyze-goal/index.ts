@@ -146,33 +146,53 @@ Return JSON:
 }`;
     } else if (type === 'roadmap-v2') {
       const { skillLevel, hoursPerWeek, deadlineWeeks } = body;
-      userPrompt += `Create a detailed, practical learning roadmap for a ${skillLevel} level learner.
-Available time: ${hoursPerWeek} hours per week for approximately ${deadlineWeeks} weeks.
 
-IMPORTANT INSTRUCTIONS:
-1. Create exactly 6-9 clear phases
-2. Each phase should be actionable and specific
-3. Time estimates should be realistic based on the hours available
-4. Include specific skills, resources, and projects
-5. Make sure JSON is valid and complete
+      systemPrompt = `You are an expert learning mentor and career advisor. You create detailed, actionable learning roadmaps.
+CRITICAL: You MUST return valid JSON only with no additional text, markdown, or formatting.
+The JSON must follow the EXACT structure specified.`;
 
-Return JSON:
+      userPrompt = `Create a comprehensive learning roadmap for achieving this goal: ${goal}
+
+Learner Profile:
+- Current skill level: ${skillLevel}
+- Weekly time commitment: ${hoursPerWeek} hours
+- Timeline: approximately ${deadlineWeeks} weeks
+
+STRICT REQUIREMENTS:
+1. Create exactly 6 to 8 phases (not more, not less)
+2. Each phase MUST have ALL fields shown in the structure below
+3. whatToLearn and whatToDo arrays MUST each have 3-5 items
+4. Time estimates should add up to roughly ${deadlineWeeks} weeks total
+5. Be specific with skills and tasks - no vague descriptions
+
+Return this EXACT JSON structure:
 {
   "phases": [
     {
       "phaseNumber": 1,
-      "phaseName": "Phase name here",
-      "goal": "What the learner will achieve in this phase",
-      "timeEstimate": "2-3 weeks",
-      "whatToLearn": ["Specific skill 1", "Specific skill 2", "Specific skill 3"],
-      "whatToDo": ["Practical task 1", "Practical task 2", "Project or exercise"],
-      "outcome": "Measurable outcome or skill gained"
+      "phaseName": "Foundation Setup",
+      "goal": "Specific goal for this phase",
+      "timeEstimate": "2 weeks",
+      "whatToLearn": ["Skill 1", "Skill 2", "Skill 3"],
+      "whatToDo": ["Task 1", "Task 2", "Project 1"],
+      "outcome": "What you can do after completing this phase"
+    },
+    {
+      "phaseNumber": 2,
+      "phaseName": "Core Fundamentals",
+      "goal": "Build on foundation",
+      "timeEstimate": "2 weeks",
+      "whatToLearn": ["Advanced Skill 1", "Advanced Skill 2", "Advanced Skill 3"],
+      "whatToDo": ["Practice Task 1", "Build Project 1", "Exercise 1"],
+      "outcome": "Measurable skill gained"
     }
   ],
-  "whatToIgnore": ["Distraction 1", "Distraction 2", "Things to avoid at this stage"],
-  "finalRealityCheck": "Honest advice about the journey ahead",
-  "closingMotivation": "Encouraging message to keep them going"
-}`;
+  "whatToIgnore": ["Distraction 1", "Premature optimization", "Things to avoid"],
+  "finalRealityCheck": "Honest, encouraging advice about the journey",
+  "closingMotivation": "An inspiring message to keep them motivated"
+}
+
+Continue this pattern for all 6-8 phases. Make each phase build on the previous one logically.`;
     } else if (type === 'optimize') {
       const { availableMinutes, focusLevel, existingTasks, consistencyNote } = body;
       userPrompt += `User has ${availableMinutes} mins and ${focusLevel}% energy. 
