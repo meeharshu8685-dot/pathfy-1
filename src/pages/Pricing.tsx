@@ -44,6 +44,7 @@ const plans = [
     variant: "hero" as const,
     popular: true,
     isPaid: true,
+    paymentLink: "https://rzp.io/rzp/P131upnF", // External Razorpay Payment Link
   },
   {
     id: "pack_60",
@@ -85,6 +86,19 @@ export default function Pricing() {
     }
 
     if (plan.isPaid) {
+      // Check if this plan has an external payment link (Growth Plan)
+      if ('paymentLink' in plan && plan.paymentLink) {
+        // Redirect to Razorpay Payment Link with user email prefilled
+        const paymentUrl = new URL(plan.paymentLink);
+        if (user.email) {
+          paymentUrl.searchParams.set('prefill[email]', user.email);
+        }
+        // Open in same window so user can return after payment
+        window.location.href = paymentUrl.toString();
+        return;
+      }
+
+      // For other paid plans, use the API-based checkout
       setProcessingId(plan.id);
       initiatePayment({
         id: plan.id,
