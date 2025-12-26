@@ -19,6 +19,11 @@ export interface MentorRoadmap {
   title: string;
   phases: RoadmapPhaseData[];
   whatToIgnore: string[];
+  howToUseThisRoadmap?: {
+    dailyApproach: string;
+    whenProgressFeelsSlow: string;
+    whenToAdjust: string;
+  };
   finalRealityCheck: string;
   closingMotivation: string;
   created_at?: string;

@@ -8,36 +8,15 @@ import { RoadmapPhase } from "@/components/roadmap/RoadmapPhase";
 import { RoadmapRealityLayer } from "@/components/roadmap/RoadmapRealityLayer";
 import { RoadmapPDFExport } from "@/components/roadmap/RoadmapPDFExport";
 import { RoadmapPrerequisiteCheck } from "@/components/roadmap/RoadmapPrerequisiteCheck";
+import { ReflectiveFeedback } from "@/components/roadmap/ReflectiveFeedback";
 import { Map, Zap, Coins, RotateCcw, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTokens } from "@/hooks/useTokens";
 import { useGoals } from "@/hooks/useGoals";
-import { useRoadmaps } from "@/hooks/useRoadmaps";
+import { useRoadmaps, MentorRoadmap, RoadmapPhaseData } from "@/hooks/useRoadmaps";
 import { toast } from "@/hooks/use-toast";
 import { getGoalDurationWeeks, getApproachById } from "@/lib/approachDurationHelper";
-
-interface RoadmapPhaseData {
-  phaseNumber: number;
-  phaseName: string;
-  goal: string;
-  timeEstimate: string;
-  whatToLearn: string[];
-  whatToDo: string[];
-  outcome: string;
-}
-
-interface MentorRoadmap {
-  phases: RoadmapPhaseData[];
-  whatToIgnore: string[];
-  howToUseThisRoadmap?: {
-    dailyApproach: string;
-    whenProgressFeelsSlow: string;
-    whenToAdjust: string;
-  };
-  finalRealityCheck: string;
-  closingMotivation: string;
-}
 
 const TOKEN_COST = 2;
 
@@ -75,6 +54,9 @@ export default function Roadmap() {
       if (existingRoadmaps && existingRoadmaps.length > 0) {
         const latestRoadmap = existingRoadmaps[0];
         setRoadmap({
+          id: latestRoadmap.id,
+          goal_id: latestRoadmap.goal_id,
+          title: latestRoadmap.title,
           phases: latestRoadmap.phases,
           whatToIgnore: latestRoadmap.whatToIgnore || [],
           finalRealityCheck: latestRoadmap.finalRealityCheck || '',
@@ -143,7 +125,7 @@ export default function Roadmap() {
 
       if (error) throw error;
 
-      const result = data.result as MentorRoadmap;
+      const result = data.result as any;
 
       // Add required fields for persistence
       const fullRoadmap = {
@@ -385,6 +367,8 @@ export default function Roadmap() {
                     <a href="/study-optimizer">What Should I Do Today?</a>
                   </Button>
                 </div>
+
+                <ReflectiveFeedback />
               </div>
             )}
           </div>
