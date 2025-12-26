@@ -104,6 +104,17 @@ export function useRoadmaps(goalId?: string | null, fetchAllHistory = false) {
 
       if (rmError) throw rmError;
 
+      // Helper to parse time estimate like "2 weeks" or "1-2 weeks" to hours
+      const parseTimeToHours = (timeStr: string): number => {
+        const numbers = timeStr.match(/\d+/g);
+        if (!numbers || numbers.length === 0) return 10;
+        const avg = numbers.reduce((a, b) => a + parseInt(b), 0) / numbers.length;
+        // If contains 'week', multiply by 10 (10 hours per week assumption)
+        if (timeStr.toLowerCase().includes('week')) return Math.round(avg * 10);
+        if (timeStr.toLowerCase().includes('month')) return Math.round(avg * 40);
+        return avg;
+      };
+
       // 2. Insert/Update Steps
       const stepsToInsert = roadmap.phases.map((phase) => ({
         id: phase.id,
@@ -112,7 +123,7 @@ export function useRoadmaps(goalId?: string | null, fetchAllHistory = false) {
         phase_number: phase.phaseNumber,
         title: phase.phaseName,
         description: phase.goal,
-        estimated_hours: parseInt(phase.timeEstimate) || 0,
+        estimated_hours: parseTimeToHours(phase.timeEstimate),
         order_index: phase.phaseNumber,
         what_to_learn: phase.whatToLearn,
         what_to_do: phase.whatToDo,
