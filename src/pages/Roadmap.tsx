@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { TokenDisplay } from "@/components/shared/TokenDisplay";
+import { GoalSelector } from "@/components/shared/GoalSelector";
 import { RoadmapPhase } from "@/components/roadmap/RoadmapPhase";
 import { RoadmapRealityLayer } from "@/components/roadmap/RoadmapRealityLayer";
 import { RoadmapPDFExport } from "@/components/roadmap/RoadmapPDFExport";
@@ -14,6 +15,7 @@ import { useTokens } from "@/hooks/useTokens";
 import { useGoals } from "@/hooks/useGoals";
 import { useRoadmaps } from "@/hooks/useRoadmaps";
 import { toast } from "@/hooks/use-toast";
+import { getGoalDurationWeeks, getApproachById } from "@/lib/approachDurationHelper";
 
 interface RoadmapPhaseData {
   phaseNumber: number;
@@ -28,6 +30,11 @@ interface RoadmapPhaseData {
 interface MentorRoadmap {
   phases: RoadmapPhaseData[];
   whatToIgnore: string[];
+  howToUseThisRoadmap?: {
+    dailyApproach: string;
+    whenProgressFeelsSlow: string;
+    whenToAdjust: string;
+  };
   finalRealityCheck: string;
   closingMotivation: string;
 }
@@ -117,6 +124,11 @@ export default function Roadmap() {
     setRoadmap(null);
 
     try {
+      // Use approach duration if available, otherwise deadline
+      const durationForApi = currentGoal.selected_approach_id && currentGoal.field
+        ? getGoalDurationWeeks(currentGoal).weeks
+        : Math.ceil((new Date(currentGoal.deadline).getTime() - Date.now()) / (7 * 24 * 60 * 60 * 1000));
+
       const { data, error } = await supabase.functions.invoke("analyze-goal", {
         body: {
           type: "roadmap-v2",
@@ -124,9 +136,8 @@ export default function Roadmap() {
           field: currentGoal.field || "general",
           skillLevel: currentGoal.calibrated_skill_level || currentGoal.skill_level,
           hoursPerWeek: currentGoal.hours_per_week,
-          deadlineWeeks: Math.ceil(
-            (new Date(currentGoal.deadline).getTime() - Date.now()) / (7 * 24 * 60 * 60 * 1000)
-          ),
+          deadlineWeeks: durationForApi,
+          approachName: selectedApproach?.name, // Pass approach context
         },
       });
 
@@ -169,9 +180,18 @@ export default function Roadmap() {
     }
   };
 
-  const deadlineWeeks = currentGoal
-    ? Math.ceil((new Date(currentGoal.deadline).getTime() - Date.now()) / (7 * 24 * 60 * 60 * 1000))
-    : 12;
+  // Get duration from approach or deadline
+  const durationInfo = currentGoal
+    ? getGoalDurationWeeks(currentGoal)
+    : { weeks: 12, source: 'deadline' as const };
+
+  const deadlineWeeks = durationInfo.weeks;
+  const approachName = durationInfo.approachName;
+
+  // Get selected approach details
+  const selectedApproach = currentGoal?.selected_approach_id && currentGoal?.field
+    ? getApproachById(currentGoal.field, currentGoal.selected_approach_id)
+    : null;
 
   const canBuildRoadmap = hasCompletedRealityCheck && hasCompletedDecomposer && currentGoal;
 
@@ -220,6 +240,22 @@ export default function Roadmap() {
           </div>
 
           <div className="max-w-3xl mx-auto">
+            {/* Goal Selector */}
+            {goals.filter(g => g.feasibility_status && g.achievement_plan).length > 1 && (
+              <div className="mb-6">
+                <GoalSelector
+                  goals={goals}
+                  selectedGoalId={selectedGoalId}
+                  onSelectGoal={(goalId) => {
+                    setSelectedGoalId(goalId);
+                    setRoadmap(null);
+                    setIsViewingHistory(false);
+                  }}
+                  filterCompleted={true}
+                />
+              </div>
+            )}
+
             {/* Prerequisite Check */}
             <RoadmapPrerequisiteCheck
               hasCompletedRealityCheck={hasCompletedRealityCheck}
@@ -248,6 +284,13 @@ export default function Roadmap() {
                         <span>{deadlineWeeks} weeks</span>
                         <span className="capitalize">{currentGoal.calibrated_skill_level || currentGoal.skill_level}</span>
                       </div>
+                      {selectedApproach && (
+                        <div className="mt-3 pt-3 border-t border-border">
+                          <div className="text-xs font-medium text-primary uppercase mb-1">Selected Approach</div>
+                          <div className="text-sm font-medium">{selectedApproach.name}</div>
+                          <div className="text-xs text-muted-foreground">{selectedApproach.durationRange} • {selectedApproach.dailyEffortRange}/day</div>
+                        </div>
+                      )}
                     </div>
 
                     <Button
@@ -320,6 +363,7 @@ export default function Roadmap() {
                 {/* Reality Layer */}
                 <RoadmapRealityLayer
                   whatToIgnore={roadmap.whatToIgnore}
+                  howToUseThisRoadmap={roadmap.howToUseThisRoadmap}
                   finalRealityCheck={roadmap.finalRealityCheck}
                   closingMotivation={roadmap.closingMotivation}
                 />

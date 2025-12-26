@@ -5,16 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TokenDisplay } from "@/components/shared/TokenDisplay";
-import { 
-  Clock, 
-  Zap, 
-  Brain, 
-  AlertTriangle, 
-  CheckCircle2, 
-  Coins, 
-  Battery, 
-  BatteryLow, 
-  BatteryMedium, 
+import { GoalSelector } from "@/components/shared/GoalSelector";
+import {
+  Clock,
+  Zap,
+  Brain,
+  AlertTriangle,
+  CheckCircle2,
+  Coins,
+  Battery,
+  BatteryLow,
+  BatteryMedium,
   BatteryFull,
   Coffee,
   Heart,
@@ -57,31 +58,44 @@ export default function StudyOptimizer() {
   const [result, setResult] = useState<OptimizerResult | null>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [consistencyDays, setConsistencyDays] = useState<number>(0);
+  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
 
-  // Get active goal for context
-  const activeGoal = goals.find(g => g.is_active && g.feasibility_status);
+  // Goals with completed reality check
+  const completedGoals = goals.filter(g => g.feasibility_status && g.achievement_plan);
+
+  // Get active goal - use selected goal or find first active
+  const activeGoal = selectedGoalId
+    ? goals.find(g => g.id === selectedGoalId)
+    : goals.find(g => g.is_active && g.feasibility_status) || completedGoals[0];
+
+  // Set initial selected goal
+  useEffect(() => {
+    if (!selectedGoalId && activeGoal) {
+      setSelectedGoalId(activeGoal.id);
+    }
+  }, [activeGoal, selectedGoalId]);
 
   // Fetch consistency history
   useEffect(() => {
     const fetchConsistency = async () => {
       if (!user) return;
-      
+
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
+
       const { data } = await supabase
         .from("daily_plans")
         .select("plan_date, completed_minutes")
         .eq("user_id", user.id)
         .gte("plan_date", sevenDaysAgo.toISOString().split("T")[0])
         .order("plan_date", { ascending: false });
-      
+
       if (data) {
         const activeDays = data.filter(d => d.completed_minutes > 0).length;
         setConsistencyDays(activeDays);
       }
     };
-    
+
     fetchConsistency();
   }, [user]);
 
@@ -154,7 +168,7 @@ export default function StudyOptimizer() {
 
       // Save daily plan
       const today = new Date().toISOString().split("T")[0];
-      
+
       // Check if plan exists for today
       const { data: existingPlan } = await supabase
         .from("daily_plans")
@@ -188,8 +202,8 @@ export default function StudyOptimizer() {
 
       toast({
         title: aiResult.suggestRest ? "Rest Day Suggested" : "Today's Plan Ready",
-        description: aiResult.suggestRest 
-          ? "Taking a break is part of progress." 
+        description: aiResult.suggestRest
+          ? "Taking a break is part of progress."
           : `${aiResult.tasks.length} task(s) for ${aiResult.totalTime} minutes.`,
       });
 
@@ -273,6 +287,21 @@ export default function StudyOptimizer() {
           </div>
 
           <div className="max-w-2xl mx-auto">
+            {/* Goal Selector */}
+            {completedGoals.length > 1 && (
+              <div className="mb-6">
+                <GoalSelector
+                  goals={goals}
+                  selectedGoalId={selectedGoalId}
+                  onSelectGoal={(goalId) => {
+                    setSelectedGoalId(goalId);
+                    setResult(null);
+                  }}
+                  filterCompleted={true}
+                />
+              </div>
+            )}
+
             {/* Context Info */}
             {activeGoal && (
               <div className="p-4 rounded-lg bg-secondary/50 border border-border mb-6">
@@ -363,7 +392,7 @@ export default function StudyOptimizer() {
                       <p className="text-muted-foreground mb-6">
                         Rest is part of progress. Your energy is low, and pushing through won't help.
                       </p>
-                      
+
                       {result.mentorNote && (
                         <div className="p-4 rounded-lg bg-primary/5 border border-primary/30 text-left">
                           <div className="flex items-center gap-2 mb-2">
