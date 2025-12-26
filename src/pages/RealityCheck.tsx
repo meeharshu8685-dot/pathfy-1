@@ -111,6 +111,14 @@ const SKILL_LEVELS = [
   { value: "advanced", label: "Advanced" },
 ];
 
+const SITUATION_OPTIONS = [
+  { value: "school-student", label: "School Student" },
+  { value: "college-student", label: "College Student" },
+  { value: "working-pro", label: "Working Professional" },
+  { value: "freelancer", label: "Freelancer/Self-employed" },
+  { value: "other", label: "Other" },
+];
+
 type Step = "input" | "quiz" | "analyzing" | "result";
 type GoalInputMode = "select" | "manual";
 type ActiveTab = "new" | "history";
@@ -129,15 +137,16 @@ export default function RealityCheck() {
   const [goalInputMode, setGoalInputMode] = useState<GoalInputMode>("select");
   const [field, setField] = useState("tech");
   const [skillLevel, setSkillLevel] = useState("beginner");
+  const [currentSituation, setCurrentSituation] = useState("other");
   const [hoursPerWeek, setHoursPerWeek] = useState(10);
-  const [deadlineValue, setDeadlineValue] = useState(3);
+  const [deadlineValue, setDeadlineValue] = useState<number | string>(3);
   const [deadlineUnit, setDeadlineUnit] = useState<"weeks" | "months">("months");
   const [quizResults, setQuizResults] = useState<QuizResults | null>(null);
   const [result, setResult] = useState<AchievementPlanData | null>(null);
   const [savedGoalId, setSavedGoalId] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const deadlineWeeks = deadlineUnit === "months" ? deadlineValue * 4 : deadlineValue;
+  const deadlineWeeks = deadlineUnit === "months" ? (Number(deadlineValue) || 1) * 4 : (Number(deadlineValue) || 1);
   const [searchParams] = useSearchParams();
   const goalIdFromUrl = searchParams.get("goalId");
   const [isViewingHistory, setIsViewingHistory] = useState(false);
@@ -167,6 +176,7 @@ export default function RealityCheck() {
       setGoal(savedGoal.title);
       setField(savedGoal.field || "other");
       setSkillLevel(savedGoal.skill_level || "beginner");
+      setCurrentSituation((savedGoal as any).current_situation || "other");
       setHoursPerWeek(savedGoal.hours_per_week || 10);
       setSavedGoalId(savedGoal.id);
 
@@ -251,6 +261,7 @@ export default function RealityCheck() {
           goal: goalText,
           field,
           skillLevel,
+          currentSituation,
           calibratedSkillLevel: quiz?.calibratedLevel || skillLevel,
           hoursPerWeek,
           deadlineWeeks,
@@ -285,6 +296,7 @@ export default function RealityCheck() {
         hour_gap: analysisResult.requiredHours - analysisResult.effectiveAvailableHours,
         recommendations: analysisResult.howToAchieve.topPriorityAreas as string[],
         field,
+        current_situation: currentSituation,
         quiz_results: quiz ? JSON.parse(JSON.stringify(quiz)) : null,
         achievement_plan: JSON.parse(JSON.stringify(analysisResult)),
         calibrated_skill_level: quiz?.calibratedLevel || null,
@@ -519,6 +531,23 @@ export default function RealityCheck() {
                     </Select>
                   </div>
 
+                  {/* Current Situation */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Your Current Situation</Label>
+                    <Select value={currentSituation} onValueChange={setCurrentSituation}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SITUATION_OPTIONS.map((s) => (
+                          <SelectItem key={s.value} value={s.value}>
+                            {s.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   {/* Hours per Week */}
                   <div className="space-y-3 sm:space-y-4">
                     <div className="flex justify-between items-center">
@@ -548,7 +577,7 @@ export default function RealityCheck() {
                         min={1}
                         max={deadlineUnit === "months" ? 36 : 52}
                         value={deadlineValue}
-                        onChange={(e) => setDeadlineValue(parseInt(e.target.value) || 1)}
+                        onChange={(e) => setDeadlineValue(e.target.value === "" ? "" : e.target.value)}
                         className="text-center"
                       />
                       <Select value={deadlineUnit} onValueChange={(v: "weeks" | "months") => setDeadlineUnit(v)}>

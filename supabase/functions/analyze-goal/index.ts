@@ -26,11 +26,14 @@ Deno.serve(async (req) => {
     let prompt = `You are an AI career advisor. Goal: ${goal}\n`;
 
     if (type === 'reality-check-v2') {
-      const { field, skillLevel, calibratedSkillLevel, hoursPerWeek, deadlineWeeks } = body;
+      const { field, skillLevel, calibratedSkillLevel, hoursPerWeek, deadlineWeeks, currentSituation } = body;
 
       // Check if this is a competitive exam
       const isCompetitiveExam = field === 'exams' || field === 'govt';
       const deadlineMonths = Math.round(deadlineWeeks / 4);
+
+      prompt += `User Situation: ${currentSituation || 'working professional'}
+`;
 
       if (isCompetitiveExam) {
         // Special prompt for competitive exams - shows preparation paths, not pass/fail
