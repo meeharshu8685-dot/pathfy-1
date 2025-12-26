@@ -147,23 +147,32 @@ Return JSON ONLY:
 }`;
     } else if (type === 'roadmap-v2') {
       const { skillLevel, hoursPerWeek, deadlineWeeks } = body;
-      prompt += `Create a learning roadmap (6-9 phases) for a ${skillLevel} level.
-Return JSON ONLY:
+      prompt += `Create a detailed, practical learning roadmap for a ${skillLevel} level learner.
+Available time: ${hoursPerWeek} hours per week for approximately ${deadlineWeeks} weeks.
+
+IMPORTANT INSTRUCTIONS:
+1. Create exactly 6-9 clear phases
+2. Each phase should be actionable and specific
+3. Time estimates should be realistic based on the hours available
+4. Include specific skills, resources, and projects
+5. Make sure JSON is valid and complete
+
+Return ONLY valid JSON in this exact format:
 {
   "phases": [
     {
-      "phaseNumber": number,
-      "phaseName": "string",
-      "goal": "string",
-      "timeEstimate": "string",
-      "whatToLearn": ["string"],
-      "whatToDo": ["string"],
-      "outcome": "string"
+      "phaseNumber": 1,
+      "phaseName": "Phase name here",
+      "goal": "What the learner will achieve in this phase",
+      "timeEstimate": "2-3 weeks",
+      "whatToLearn": ["Specific skill 1", "Specific skill 2", "Specific skill 3"],
+      "whatToDo": ["Practical task 1", "Practical task 2", "Project or exercise"],
+      "outcome": "Measurable outcome or skill gained"
     }
   ],
-  "whatToIgnore": ["string"],
-  "finalRealityCheck": "string",
-  "closingMotivation": "string"
+  "whatToIgnore": ["Distraction 1", "Distraction 2", "Things to avoid at this stage"],
+  "finalRealityCheck": "Honest advice about the journey ahead",
+  "closingMotivation": "Encouraging message to keep them going"
 }`;
     } else if (type === 'optimize') {
       const { availableMinutes, focusLevel, existingTasks, consistencyNote } = body;
@@ -188,64 +197,118 @@ Return JSON ONLY:
       });
     }
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
-    const geminiResponse = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        safetySettings: [
-          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          responseMimeType: 'application/json'
+    // Retry logic for transient failures
+    let lastError = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        console.log(`Attempt ${attempt} for ${type}`);
+
+        const geminiResponse = await fetch(geminiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            safetySettings: [
+              { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+              { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+              { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+              { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
+            ],
+            generationConfig: {
+              temperature: 0.6, // Slightly lower for more consistent output
+              responseMimeType: 'application/json',
+              maxOutputTokens: 8192
+            }
+          })
+        });
+
+        if (!geminiResponse.ok) {
+          const errorText = await geminiResponse.text();
+          console.error(`Gemini API Error [${geminiResponse.status}] Attempt ${attempt}:`, errorText);
+
+          // If rate limited or server error, retry
+          if (geminiResponse.status === 429 || geminiResponse.status >= 500) {
+            lastError = `Gemini API error: ${geminiResponse.status}`;
+            await new Promise(r => setTimeout(r, 1000 * attempt)); // Exponential backoff
+            continue;
+          }
+
+          return new Response(JSON.stringify({ error: 'Gemini API failed', details: errorText, status: geminiResponse.status }), {
+            status: 502,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
         }
-      })
-    });
 
-    if (!geminiResponse.ok) {
-      const errorText = await geminiResponse.text();
-      console.error(`Gemini API Error [${geminiResponse.status}]:`, errorText);
-      return new Response(JSON.stringify({ error: 'Gemini API failed', details: errorText, status: geminiResponse.status }), {
-        status: 502, // Bad Gateway
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+        const data = await geminiResponse.json();
+        const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!content) {
+          console.error('Empty content from Gemini, attempt', attempt);
+          lastError = 'Empty response from AI';
+          continue;
+        }
+
+        let result;
+        try {
+          // More robust JSON extraction
+          let cleaned = content;
+
+          // Remove markdown code blocks if present
+          cleaned = cleaned.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+
+          // Trim whitespace
+          cleaned = cleaned.trim();
+
+          // Try to find JSON object boundaries if the response has extra text
+          const jsonStart = cleaned.indexOf('{');
+          const jsonEnd = cleaned.lastIndexOf('}');
+          if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+            cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
+          }
+
+          result = JSON.parse(cleaned);
+
+          // Validate the result has expected structure for roadmap
+          if (type === 'roadmap-v2') {
+            if (!result.phases || !Array.isArray(result.phases) || result.phases.length === 0) {
+              console.error('Invalid roadmap structure, missing phases');
+              lastError = 'Invalid roadmap structure';
+              continue;
+            }
+          }
+
+        } catch (e) {
+          console.error(`JSON parse error attempt ${attempt}:`, e);
+          lastError = 'Failed to parse AI response';
+          continue;
+        }
+
+        console.log(`Success on attempt ${attempt}`);
+        return new Response(JSON.stringify({ result }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+
+      } catch (fetchError: any) {
+        console.error(`Fetch error attempt ${attempt}:`, fetchError);
+        lastError = fetchError?.message || 'Network error';
+        await new Promise(r => setTimeout(r, 1000 * attempt));
+      }
     }
 
-    const data = await geminiResponse.json();
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!content) {
-      return new Response(JSON.stringify({ error: 'Empty response from AI', raw: data }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    let result;
-    try {
-      const cleaned = content.replace(/```json\n?|```/g, '').trim();
-      result = JSON.parse(cleaned);
-    } catch (e) {
-      return new Response(JSON.stringify({ error: 'Failed to parse AI JSON', content }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    return new Response(JSON.stringify({ result }), {
+    // All retries failed
+    return new Response(JSON.stringify({ error: 'Failed after 3 attempts', lastError }), {
+      status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
+    console.error('Unhandled error:', error);
     return new Response(JSON.stringify({ error: 'Internal Server Error', message: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
+
