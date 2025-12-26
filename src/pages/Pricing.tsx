@@ -62,6 +62,7 @@ const plans = [
     variant: "outline" as const,
     popular: false,
     isPaid: true,
+    paymentLink: "https://rzp.io/rzp/Yct4rgA1", // External Razorpay Payment Link
   },
 ];
 
