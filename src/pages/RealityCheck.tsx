@@ -145,11 +145,12 @@ export default function RealityCheck() {
   // Load saved goal if goalId is in URL
   useEffect(() => {
     if (goalIdFromUrl && user) {
-      loadSavedGoal(goalIdFromUrl);
+      const isEditMode = searchParams.get("edit") === "true";
+      loadSavedGoal(goalIdFromUrl, isEditMode);
     }
   }, [goalIdFromUrl, user]);
 
-  const loadSavedGoal = async (goalId: string) => {
+  const loadSavedGoal = async (goalId: string, isEditMode: boolean = false) => {
     try {
       const { data: savedGoal, error } = await supabase
         .from("goals")
@@ -162,17 +163,22 @@ export default function RealityCheck() {
         return;
       }
 
-      // Load the saved analysis
-      if (savedGoal.achievement_plan) {
+      // Pre-fill form values regardless of mode
+      setGoal(savedGoal.title);
+      setField(savedGoal.field || "other");
+      setSkillLevel(savedGoal.skill_level || "beginner");
+      setHoursPerWeek(savedGoal.hours_per_week || 10);
+      setSavedGoalId(savedGoal.id);
+
+      // Determine view based on edit mode
+      if (isEditMode) {
+        setStep("input");
+        setActiveTab("new");
+        setGoalInputMode("manual");
+      } else if (savedGoal.achievement_plan) {
         setResult(savedGoal.achievement_plan as AchievementPlanData);
-        setSavedGoalId(savedGoal.id);
         setIsViewingHistory(true);
         setStep("result");
-        // Set form values from saved goal
-        setGoal(savedGoal.title);
-        setField(savedGoal.field || "other");
-        setSkillLevel(savedGoal.skill_level || "beginner");
-        setHoursPerWeek(savedGoal.hours_per_week || 10);
       } else {
         toast({ title: "No saved analysis found for this goal", variant: "destructive" });
       }
@@ -266,32 +272,47 @@ export default function RealityCheck() {
       // Spend tokens
       await spendTokens.mutateAsync({ amount: TOKEN_COST, feature: "reality-check", description: "Career Reality Check analysis" });
 
-      // Save to database
-      const { data: savedGoal, error: saveError } = await supabase
-        .from("goals")
-        .insert({
-          user_id: user.id,
-          title: goalText,
-          skill_level: skillLevel,
-          hours_per_week: hoursPerWeek,
-          deadline: new Date(Date.now() + deadlineWeeks * 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-          feasibility_status: analysisResult.feasibilityStatus,
-          estimated_hours: analysisResult.requiredHours,
-          available_hours: analysisResult.effectiveAvailableHours,
-          hour_gap: analysisResult.requiredHours - analysisResult.effectiveAvailableHours,
-          recommendations: analysisResult.howToAchieve.topPriorityAreas as string[],
-          field,
-          quiz_results: quiz ? JSON.parse(JSON.stringify(quiz)) : null,
-          achievement_plan: JSON.parse(JSON.stringify(analysisResult)),
-          calibrated_skill_level: quiz?.calibratedLevel || null,
-        })
-        .select()
-        .single();
+      // Save to database (Upsert if editing)
+      const goalData = {
+        user_id: user.id,
+        title: goalText,
+        skill_level: skillLevel,
+        hours_per_week: hoursPerWeek,
+        deadline: new Date(Date.now() + deadlineWeeks * 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+        feasibility_status: analysisResult.feasibilityStatus,
+        estimated_hours: analysisResult.requiredHours,
+        available_hours: analysisResult.effectiveAvailableHours,
+        hour_gap: analysisResult.requiredHours - analysisResult.effectiveAvailableHours,
+        recommendations: analysisResult.howToAchieve.topPriorityAreas as string[],
+        field,
+        quiz_results: quiz ? JSON.parse(JSON.stringify(quiz)) : null,
+        achievement_plan: JSON.parse(JSON.stringify(analysisResult)),
+        calibrated_skill_level: quiz?.calibratedLevel || null,
+        is_active: true,
+      };
 
-      if (saveError) {
-        console.error("Save error:", saveError);
+      let saveResult;
+      if (savedGoalId) {
+        // Update existing goal
+        saveResult = await supabase
+          .from("goals")
+          .update(goalData)
+          .eq("id", savedGoalId)
+          .select()
+          .single();
       } else {
-        setSavedGoalId(savedGoal.id);
+        // Insert new goal
+        saveResult = await supabase
+          .from("goals")
+          .insert(goalData)
+          .select()
+          .single();
+      }
+
+      if (saveResult.error) {
+        console.error("Save error:", saveResult.error);
+      } else {
+        setSavedGoalId(saveResult.data.id);
       }
 
       setStep("result");

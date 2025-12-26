@@ -1,11 +1,18 @@
 import { format } from "date-fns";
-import { History, Target, Clock, TrendingUp, ChevronRight, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
+import { History, Target, Clock, TrendingUp, ChevronRight, AlertTriangle, CheckCircle, XCircle, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGoals } from "@/hooks/useGoals";
 import { useNavigate } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Goal = Tables<"goals">;
@@ -44,8 +51,25 @@ interface GoalHistoryProps {
 }
 
 export function GoalHistory({ onSelectGoal }: GoalHistoryProps) {
-  const { goals, isLoading } = useGoals();
+  const { goals, isLoading, deleteGoal } = useGoals();
   const navigate = useNavigate();
+
+  const handleDelete = async (e: React.MouseEvent, goalId: string, goalTitle: string) => {
+    e.stopPropagation();
+    if (confirm(`Are you sure you want to delete "${goalTitle}"? This will also delete any associated roadmaps.`)) {
+      try {
+        await deleteGoal.mutateAsync(goalId);
+        toast({ title: "Goal deleted", description: "The goal has been removed." });
+      } catch (error) {
+        toast({ title: "Failed to delete goal", variant: "destructive" });
+      }
+    }
+  };
+
+  const handleEdit = (e: React.MouseEvent, goalId: string) => {
+    e.stopPropagation();
+    navigate(`/reality-check?goalId=${goalId}&edit=true`);
+  };
 
   if (isLoading) {
     return (
@@ -95,7 +119,6 @@ export function GoalHistory({ onSelectGoal }: GoalHistoryProps) {
     if (onSelectGoal) {
       onSelectGoal(goal);
     } else {
-      // Navigate to reality check to view the saved analysis
       navigate(`/reality-check?goalId=${goal.id}`);
     }
   };
@@ -119,41 +142,72 @@ export function GoalHistory({ onSelectGoal }: GoalHistoryProps) {
           const StatusIcon = status?.icon || Target;
 
           return (
-            <button
+            <div
               key={goal.id}
-              onClick={() => handleViewDetails(goal)}
-              className="w-full flex items-center gap-3 p-3 sm:p-4 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-all duration-200 group text-left"
+              className="relative flex items-center gap-3 p-3 sm:p-4 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-all duration-200 group"
               style={{ animationDelay: `${index * 0.05}s` }}
             >
-              <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${status?.className || "bg-muted text-muted-foreground"}`}>
-                <StatusIcon className="h-5 w-5" />
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h4 className="font-medium text-sm sm:text-base truncate">{goal.title}</h4>
+              <button
+                onClick={() => handleViewDetails(goal)}
+                className="flex items-center gap-3 flex-1 text-left"
+              >
+                <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${status?.className || "bg-muted text-muted-foreground"}`}>
+                  <StatusIcon className="h-5 w-5" />
                 </div>
-                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {format(new Date(goal.created_at), "MMM d, yyyy")}
-                  </span>
-                  {goal.field && (
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                      {fieldLabels[goal.field] || goal.field}
-                    </Badge>
-                  )}
-                  {goal.hours_per_week && (
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-medium text-sm sm:text-base truncate">{goal.title}</h4>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
-                      <TrendingUp className="h-3 w-3" />
-                      {goal.hours_per_week}h/week
+                      <Clock className="h-3 w-3" />
+                      {format(new Date(goal.created_at), "MMM d, yyyy")}
                     </span>
-                  )}
+                    {goal.field && (
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                        {fieldLabels[goal.field] || goal.field}
+                      </Badge>
+                    )}
+                    {goal.hours_per_week && (
+                      <span className="flex items-center gap-1">
+                        <TrendingUp className="h-3 w-3" />
+                        {goal.hours_per_week}h/week
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
-            </button>
+                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+              </button>
+
+              {/* Actions Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity absolute right-2 top-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={(e) => handleEdit(e as any, goal.id)}>
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Edit Goal
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onClick={(e) => handleDelete(e as any, goal.id, goal.title)}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           );
         })}
 
