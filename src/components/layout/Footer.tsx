@@ -49,12 +49,8 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground space-y-2">
-          <p>© {new Date().getFullYear()} Pathly. Built for execution, not excuses.</p>
-          <p className="text-xs opacity-70">
-            Built by <span className="text-primary hover:underline cursor-default">Harsh Vishwakarma</span>,
-            with inputs from <span className="text-primary hover:underline cursor-default">Abhishek Gaud</span>.
-          </p>
+        <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
+          © {new Date().getFullYear()} Pathly. Built for execution, not excuses.
         </div>
       </div>
     </footer>
