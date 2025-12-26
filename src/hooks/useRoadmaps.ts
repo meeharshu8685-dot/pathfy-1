@@ -60,21 +60,21 @@ export function useRoadmaps(goalId?: string | null, fetchAllHistory = false) {
         goal_id: rm.goal_id,
         title: rm.title,
         whatToIgnore: rm.what_to_ignore || [],
-        finalRealityCheck: rm.final_reality_check,
-        closingMotivation: rm.closing_motivation,
+        finalRealityCheck: rm.final_reality_check || '',
+        closingMotivation: rm.closing_motivation || '',
         created_at: rm.created_at,
         is_favorite: rm.is_favorite,
-        phases: rm.roadmap_steps
+        phases: (rm.roadmap_steps || [])
           .sort((a: any, b: any) => a.phase_number - b.phase_number)
           .map((step: any) => ({
             id: step.id,
             phaseNumber: step.phase_number,
             phaseName: step.title,
             goal: step.description,
-            timeEstimate: `${step.estimated_hours} hours`,
+            timeEstimate: `${step.estimated_hours || 0} hours`,
             whatToLearn: step.what_to_learn || [],
             whatToDo: step.what_to_do || [],
-            outcome: step.outcome
+            outcome: step.outcome || ''
           }))
       })) as MentorRoadmap[];
     },
