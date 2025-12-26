@@ -1,194 +1,171 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
-  // Handle CORS preflight requests
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    // Get the authorization header
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Get user from auth header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      throw new Error('No authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Not authenticated' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Initialize Supabase clients
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } }
-    });
-
-    // Service role client for updating data
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Get the authenticated user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
-      throw new Error('User not authenticated');
+      return new Response(
+        JSON.stringify({ error: 'Invalid token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const { code } = await req.json();
 
     if (!code || typeof code !== 'string') {
-      throw new Error('Invalid promo code format');
+      return new Response(
+        JSON.stringify({ error: 'Promo code is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const normalizedCode = code.trim().toUpperCase();
-    console.log(`User ${user.id} attempting to redeem code: ${normalizedCode}`);
 
-    // Get the promo code
-    const { data: promoCode, error: promoError } = await supabaseAdmin
+    // Find the promo code
+    const { data: promoCode, error: promoError } = await supabase
       .from('promo_codes')
       .select('*')
       .eq('code', normalizedCode)
       .eq('is_active', true)
-      .maybeSingle();
+      .single();
 
-    if (promoError) {
-      console.error('Promo code lookup error:', promoError);
-      throw new Error('Failed to validate promo code');
+    if (promoError || !promoCode) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid or inactive promo code' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    if (!promoCode) {
-      throw new Error('Invalid or expired promo code');
-    }
-
-    // Check if expired
+    // Check if code has expired
     if (promoCode.expires_at && new Date(promoCode.expires_at) < new Date()) {
-      throw new Error('This promo code has expired');
+      return new Response(
+        JSON.stringify({ error: 'This promo code has expired' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Check if max uses reached
-    if (promoCode.max_uses && promoCode.uses_count >= promoCode.max_uses) {
-      throw new Error('This promo code has reached its usage limit');
+    // Check if max uses exceeded
+    if (promoCode.current_uses >= promoCode.max_uses) {
+      return new Response(
+        JSON.stringify({ error: 'This promo code has reached its maximum uses' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Check user redemption count
-    const { count, error: countError } = await supabaseAdmin
+    // Check if user already used this code
+    const { data: existingRedemption } = await supabase
       .from('promo_code_redemptions')
-      .select('id', { count: 'exact', head: true })
+      .select('id')
       .eq('promo_code_id', promoCode.id)
-      .eq('user_id', user.id);
-
-    if (countError) {
-      console.error('Redemption check error:', countError);
-      throw new Error('Failed to check redemption status');
-    }
-
-    const maxUsesPerUser = promoCode.max_uses_per_user || 1;
-    if ((count || 0) >= maxUsesPerUser) {
-      throw new Error(`You have already redeemed this code ${maxUsesPerUser} time(s)`);
-    }
-
-    // Calculate tokens to give
-    let tokensToAdd = 0;
-    if (promoCode.discount_type === 'free_tokens') {
-      tokensToAdd = promoCode.discount_value;
-    } else if (promoCode.discount_type === 'percentage') {
-      // For percentage, we'll give a percentage of base tokens (e.g., 10 tokens base)
-      tokensToAdd = Math.floor(10 * (promoCode.discount_value / 100));
-    }
-
-    // Get current user profile
-    const { data: profile, error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .select('tokens')
       .eq('user_id', user.id)
       .single();
 
-    if (profileError) {
-      console.error('Profile fetch error:', profileError);
-      throw new Error('Failed to fetch user profile');
+    if (existingRedemption) {
+      return new Response(
+        JSON.stringify({ error: 'You have already used this promo code' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    const currentTokens = profile?.tokens ?? 0;
-    const newBalance = currentTokens + tokensToAdd;
-
-    // Update user tokens
-    const { error: updateError } = await supabaseAdmin
-      .from('profiles')
-      .update({ tokens: newBalance })
-      .eq('user_id', user.id);
-
-    if (updateError) {
-      console.error('Token update error:', updateError);
-      throw new Error('Failed to add tokens');
-    }
-
-    // Record redemption
-    const { error: recordError } = await supabaseAdmin
+    // Start transaction-like operations
+    // 1. Record the redemption
+    const { error: redemptionError } = await supabase
       .from('promo_code_redemptions')
       .insert({
         promo_code_id: promoCode.id,
-        user_id: user.id,
-        tokens_received: tokensToAdd,
+        user_id: user.id
       });
 
-    if (recordError) {
-      console.error('Redemption record error:', recordError);
-      // Don't fail - tokens already added
+    if (redemptionError) {
+      console.error('Redemption error:', redemptionError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to redeem promo code' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Update promo code usage count
-    const { error: usageError } = await supabaseAdmin
+    // 2. Increment the usage count
+    const { error: updateError } = await supabase
       .from('promo_codes')
-      .update({ uses_count: promoCode.uses_count + 1 })
+      .update({ current_uses: promoCode.current_uses + 1 })
       .eq('id', promoCode.id);
 
-    if (usageError) {
-      console.error('Usage count update error:', usageError);
-      // Don't fail - tokens already added
+    if (updateError) {
+      console.error('Update error:', updateError);
     }
 
-    // Record token transaction
-    const { error: transactionError } = await supabaseAdmin
+    // 3. Add tokens to user's account
+    const { data: existingTokens } = await supabase
+      .from('user_tokens')
+      .select('balance')
+      .eq('user_id', user.id)
+      .single();
+
+    if (existingTokens) {
+      // Update existing balance
+      await supabase
+        .from('user_tokens')
+        .update({ balance: existingTokens.balance + promoCode.tokens_awarded })
+        .eq('user_id', user.id);
+    } else {
+      // Create new token record
+      await supabase
+        .from('user_tokens')
+        .insert({
+          user_id: user.id,
+          balance: promoCode.tokens_awarded
+        });
+    }
+
+    // 4. Log the transaction
+    await supabase
       .from('token_transactions')
       .insert({
         user_id: user.id,
-        amount: tokensToAdd,
-        balance_after: newBalance,
-        transaction_type: 'credit',
-        feature_used: 'promo_code',
-        description: `Promo code: ${normalizedCode} - ${promoCode.description || 'Bonus tokens'}`,
+        amount: promoCode.tokens_awarded,
+        type: 'credit',
+        feature: 'promo_code',
+        description: `Promo code: ${normalizedCode}`
       });
-
-    if (transactionError) {
-      console.error('Transaction record error:', transactionError);
-    }
-
-    console.log(`Successfully redeemed code ${normalizedCode} for user ${user.id}. Added ${tokensToAdd} tokens.`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        tokensReceived: tokensToAdd,
-        newBalance: newBalance,
-        message: `Successfully redeemed! You received ${tokensToAdd} tokens.`,
+        message: `Successfully redeemed! ${promoCode.tokens_awarded} tokens added to your account.`,
+        tokens_awarded: promoCode.tokens_awarded
       }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Error redeeming promo code:', error);
+
+  } catch (error: any) {
+    console.error('Promo code error:', error);
     return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400
-      }
+      JSON.stringify({ error: 'Internal server error', details: error?.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

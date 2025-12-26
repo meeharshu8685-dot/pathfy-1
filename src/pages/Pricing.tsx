@@ -1,9 +1,14 @@
+import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { TokenDisplay } from "@/components/shared/TokenDisplay";
-import { Check, Zap, Star, Rocket, Clock } from "lucide-react";
+import { Check, Zap, Star, Rocket, Clock, Gift, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+import { useTokens } from "@/hooks/useTokens";
 
 const plans = [
   {
@@ -72,6 +77,9 @@ const tokenCosts = [
 export default function Pricing() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { refetch: refetchTokens } = useTokens();
+  const [promoCode, setPromoCode] = useState("");
+  const [isRedeeming, setIsRedeeming] = useState(false);
 
   const handlePlanClick = (plan: typeof plans[0]) => {
     if (plan.isPaid) {
@@ -85,6 +93,60 @@ export default function Pricing() {
       return;
     }
     navigate("/dashboard");
+  };
+
+  const handleRedeemPromoCode = async () => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please login to redeem a promo code",
+        variant: "destructive",
+      });
+      navigate("/login");
+      return;
+    }
+
+    if (!promoCode.trim()) {
+      toast({
+        title: "Enter Code",
+        description: "Please enter a promo code",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsRedeeming(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("redeem-promo-code", {
+        body: { code: promoCode.trim() },
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        toast({
+          title: "Invalid Code",
+          description: data.error,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success! 🎉",
+          description: data.message,
+        });
+        setPromoCode("");
+        refetchTokens();
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to redeem promo code",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRedeeming(false);
+    }
   };
 
   return (
@@ -182,6 +244,38 @@ export default function Pricing() {
                     </span>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Promo Code Section */}
+            <div className="mt-8 p-6 rounded-xl bg-gradient-to-br from-purple-500/10 to-primary/10 border border-purple-500/30">
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <Gift className="w-6 h-6 text-purple-500" />
+                <h3 className="text-lg font-semibold">Have a Promo Code?</h3>
+              </div>
+              <p className="text-sm text-muted-foreground text-center mb-4">
+                Enter your promo code to get bonus tokens!
+              </p>
+              <div className="flex gap-2 max-w-sm mx-auto">
+                <Input
+                  placeholder="Enter promo code"
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                  className="flex-1 text-center font-semibold tracking-wider uppercase"
+                  disabled={isRedeeming}
+                  onKeyDown={(e) => e.key === 'Enter' && handleRedeemPromoCode()}
+                />
+                <Button
+                  variant="hero"
+                  onClick={handleRedeemPromoCode}
+                  disabled={isRedeeming || !promoCode.trim()}
+                >
+                  {isRedeeming ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "Redeem"
+                  )}
+                </Button>
               </div>
             </div>
 
