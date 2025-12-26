@@ -118,27 +118,27 @@ Deno.serve(async (req) => {
       console.error('Update error:', updateError);
     }
 
-    // 3. Add tokens to user's account
-    const { data: existingTokens } = await supabase
-      .from('user_tokens')
-      .select('balance')
+    // 3. Add tokens to user's profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('tokens')
       .eq('user_id', user.id)
       .single();
 
-    if (existingTokens) {
-      // Update existing balance
-      await supabase
-        .from('user_tokens')
-        .update({ balance: existingTokens.balance + promoCode.tokens_awarded })
-        .eq('user_id', user.id);
-    } else {
-      // Create new token record
-      await supabase
-        .from('user_tokens')
-        .insert({
-          user_id: user.id,
-          balance: promoCode.tokens_awarded
-        });
+    const currentTokens = profile?.tokens || 0;
+    const newBalance = currentTokens + promoCode.tokens_awarded;
+
+    const { error: tokenError } = await supabase
+      .from('profiles')
+      .update({ tokens: newBalance })
+      .eq('user_id', user.id);
+
+    if (tokenError) {
+      console.error('Token update error:', tokenError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to add tokens' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // 4. Log the transaction
@@ -147,9 +147,9 @@ Deno.serve(async (req) => {
       .insert({
         user_id: user.id,
         amount: promoCode.tokens_awarded,
-        type: 'credit',
-        feature: 'promo_code',
-        description: `Promo code: ${normalizedCode}`
+        balance_after: newBalance,
+        transaction_type: 'credit',
+        description: `Promo code redeemed: ${normalizedCode}`
       });
 
     return new Response(
