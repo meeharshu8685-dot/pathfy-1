@@ -25,6 +25,7 @@ export function Footer() {
               <li><Link to="/problem-decomposer" className="hover:text-primary transition-colors">Problem Decomposer</Link></li>
               <li><Link to="/roadmap" className="hover:text-primary transition-colors">Roadmap Builder</Link></li>
               <li><Link to="/study-optimizer" className="hover:text-primary transition-colors">Study Optimizer</Link></li>
+              <li><Link to="/how-to-use" className="hover:text-primary transition-colors">How to Use</Link></li>
             </ul>
           </div>
 
