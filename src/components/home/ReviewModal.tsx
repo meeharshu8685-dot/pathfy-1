@@ -84,9 +84,9 @@ export function ReviewModal({ isOpen, onClose }: ReviewModalProps) {
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-md bg-background border-border">
+            <DialogContent className="w-[95vw] max-w-md bg-background border-border p-6 rounded-3xl">
                 <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold">Review Your Experience</DialogTitle>
+                    <DialogTitle className="text-xl md:text-2xl font-bold">Review Your Experience</DialogTitle>
                     <DialogDescription>
                         We'd love to hear how Pathfy has helped you!
                     </DialogDescription>
@@ -104,8 +104,8 @@ export function ReviewModal({ isOpen, onClose }: ReviewModalProps) {
                                 >
                                     <Star
                                         className={`w-8 h-8 ${star <= rating
-                                                ? "fill-primary text-primary"
-                                                : "text-muted-foreground/30"
+                                            ? "fill-primary text-primary"
+                                            : "text-muted-foreground/30"
                                             }`}
                                     />
                                 </button>
