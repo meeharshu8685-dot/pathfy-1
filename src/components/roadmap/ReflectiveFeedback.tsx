@@ -36,7 +36,6 @@ export function ReflectiveFeedback() {
         };
 
         const flag = flagMap[selection];
-        const isEligible = flag !== "issue" && followupText.trim().length > 0;
 
         try {
             const { error } = await (supabase.from("user_feedback") as any).insert({
@@ -46,7 +45,7 @@ export function ReflectiveFeedback() {
                 feature: "roadmap",
                 flag: flag,
                 feedback_text: followupText || null,
-                eligible_for_testimonial: isEligible,
+                eligible_for_testimonial: false,
                 show_in_testimonial: false
             });
 

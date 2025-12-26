@@ -5,7 +5,6 @@ interface Review {
     role: string;
     content: string;
     rating: number;
-    avatar?: string;
 }
 
 const reviews: Review[] = [
@@ -13,29 +12,55 @@ const reviews: Review[] = [
         name: "Arjun Mehta",
         role: "Final Year CSE, IIT Delhi",
         content: "Pathfy changed how I look at my goals. Instead of just wishing to become a MERN stack dev, I now have a day-by-day roadmap that actually accounts for my college hours.",
-        rating: 5,
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Arjun"
+        rating: 5
     },
     {
         name: "Ananya Iyer",
         role: "Data Science Aspirant",
         content: "The Reality Check feature is a wake-up call. It told me my 3-month goal was unrealistic given my schedule, and helped me adjust to a 6-month path that I'm actually sticking to.",
-        rating: 5,
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Ananya"
+        rating: 5
     },
     {
         name: "Rohan Varma",
         role: "Junior SDE at Zoho",
         content: "The Decomposer tool is legendary. It breaks down complex cloud architecture topics into manageable 90-minute blocks. My productivity has doubled.",
-        rating: 5,
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Rohan"
+        rating: 5
     },
     {
         name: "Ishita Kapoor",
         role: "Product Design Student",
         content: "I love the Study Optimizer. On days when I'm exhausted, it gives me low-effort tasks that still move the needle. No more 'all or nothing' thinking.",
-        rating: 4,
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Ishita"
+        rating: 4
+    },
+    {
+        name: "Shahih Shah",
+        role: "Full Stack Developer",
+        content: "The dependency-locked roadmap is a game changer. I used to jump between technologies without finishing the basics. Now, Pathfy keeps me on the right track until I'm actually ready to move on.",
+        rating: 5
+    },
+    {
+        name: "Irfan Khan",
+        role: "Govt Exam Aspirant",
+        content: "Managing a huge syllabus like UPSC felt impossible until I used the Decomposer. It turned terrifying subjects into small, 90-minute wins. Highly recommended for any serious aspirant.",
+        rating: 5
+    },
+    {
+        name: "Suresh Pillai",
+        role: "Mechanical Engineer",
+        content: "It's a decent tool, but the learning curve for the roadmap builder was a bit steep for me. Once I got the hang of it, it became useful, but the initial onboarding could be simpler.",
+        rating: 3
+    },
+    {
+        name: "Pooja Sharma",
+        role: "Freelance Content Writer",
+        content: "The AI analysis is sometimes a bit too conservative. It told me my goal was impossible even when I knew I could hustle more. Good for reality, but maybe a bit too discouraging sometimes.",
+        rating: 3
+    },
+    {
+        name: "Vikram Singh",
+        role: "Commerce Student",
+        content: "I found the UI a bit overwhelming initially with so many different tools. I just wanted a simple to-do list, which this isn't. It's powerful, but maybe too much for casual planning.",
+        rating: 2
     }
 ];
 
@@ -56,7 +81,7 @@ export function Reviews() {
                 </div>
 
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {reviews.filter(t => t.content && t.content.trim().length > 0).map((t, i) => (
+                    {reviews.map((t, i) => (
                         <div
                             key={i}
                             className="p-6 rounded-2xl card-gradient border border-border flex flex-col justify-between hover:border-primary/30 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 group"
@@ -76,18 +101,9 @@ export function Reviews() {
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-3 pt-4 border-t border-border/50">
-                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 overflow-hidden">
-                                    {t.avatar ? (
-                                        <img src={t.avatar} alt={t.name} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <User className="w-5 h-5 text-primary" />
-                                    )}
-                                </div>
-                                <div>
-                                    <h4 className="font-bold text-foreground text-sm">{t.name}</h4>
-                                    <p className="text-xs text-muted-foreground">{t.role}</p>
-                                </div>
+                            <div className="pt-4 border-t border-border/50">
+                                <h4 className="font-bold text-foreground text-sm">{t.name}</h4>
+                                <p className="text-xs text-muted-foreground">{t.role}</p>
                             </div>
                         </div>
                     ))}
