@@ -65,7 +65,7 @@ const faqs = [
 const Help = () => {
   const handleFeedback = () => {
     window.location.href =
-      "mailto:meeharshu8685@gmail.com?subject=Pathly Feedback";
+      "mailto:meeharshu8685@gmail.com?subject=Pathfy Feedback";
   };
 
   return (

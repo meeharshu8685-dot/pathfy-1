@@ -11,7 +11,7 @@ export function Footer() {
               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
                 <Zap className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold">Pathly</span>
+              <span className="text-xl font-bold">Pathfy</span>
             </Link>
             <p className="text-sm text-muted-foreground">
               Convert goals into realistic, dependency-aware execution systems.
@@ -50,7 +50,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} Pathly. Built for execution, not excuses.
+          © {new Date().getFullYear()} Pathfy. Built for execution, not excuses.
         </div>
       </div>
     </footer>

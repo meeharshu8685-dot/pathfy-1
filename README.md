@@ -1,4 +1,4 @@
-# Pathly
+# Pathfy
 
 AI-powered career planning and goal execution platform. Get realistic timelines, personalized roadmaps, and daily task optimization.
 

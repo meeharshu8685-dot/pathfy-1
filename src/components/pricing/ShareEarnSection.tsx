@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 
 const SHARE_URL = "https://pathly-executor.vercel.app/";
-const SHARE_TEXT = "Build a realistic roadmap for your goals with Pathly. 🚀";
+const SHARE_TEXT = "Build a realistic roadmap for your goals with Pathfy. 🚀";
 
 export function ShareEarnSection() {
     const { user } = useAuth();
@@ -63,7 +63,7 @@ export function ShareEarnSection() {
                 if (navigator.share) {
                     try {
                         await navigator.share({
-                            title: "Pathly",
+                            title: "Pathfy",
                             text: SHARE_TEXT,
                             url: SHARE_URL,
                         });

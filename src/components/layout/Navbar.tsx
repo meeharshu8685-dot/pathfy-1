@@ -46,7 +46,7 @@ export function Navbar() {
               <Zap className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className="text-xl font-bold font-display text-foreground group-hover:text-primary transition-colors duration-300">
-              Pathly
+              Pathfy
             </span>
           </Link>
 

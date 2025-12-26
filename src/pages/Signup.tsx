@@ -41,7 +41,7 @@ export default function Signup() {
     }
 
     toast({
-      title: "Welcome to Pathly!",
+      title: "Welcome to Pathfy!",
       description: "Your account has been created. You've received 5 free tokens.",
     });
     navigate("/dashboard");
@@ -59,11 +59,11 @@ export default function Signup() {
                 <Zap className="w-5 h-5 text-white" />
               </div>
               <span className="text-lg font-semibold text-foreground">
-                Pathly
+                Pathfy
               </span>
             </Link>
-            <Link 
-              to="/login" 
+            <Link
+              to="/login"
               className="px-4 py-2 rounded-full border border-border text-sm font-medium hover:bg-secondary/50 transition-colors"
             >
               Log in
@@ -136,8 +136,8 @@ export default function Signup() {
             </div>
 
             {/* Submit Button */}
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full h-14 rounded-2xl bg-foreground text-background hover:bg-foreground/90 text-base font-medium shadow-lg"
               disabled={isLoading}
             >

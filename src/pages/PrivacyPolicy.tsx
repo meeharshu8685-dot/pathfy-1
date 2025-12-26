@@ -85,8 +85,8 @@ const PrivacyPolicy = () => {
                 </ul>
                 <p className="mt-2">
                   To request data deletion, contact us at:{" "}
-                  <a href="mailto:Pathly8685@Gmail.com" className="text-primary hover:underline">
-                    Pathly8685@Gmail.com
+                  <a href="mailto:Pathfy8685@Gmail.com" className="text-primary hover:underline">
+                    Pathfy8685@Gmail.com
                   </a>
                 </p>
               </section>

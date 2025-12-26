@@ -109,12 +109,12 @@ export function SplashScreen({ onComplete, duration = 3000 }: SplashScreenProps)
         {/* Logo */}
         <div
           className={`relative transition-all duration-700 ease-out ${phase === "init"
-              ? "scale-50 opacity-0"
-              : phase === "logo"
-                ? "scale-100 opacity-100"
-                : phase === "text" || phase === "tagline"
-                  ? "scale-90 opacity-100 -translate-y-2"
-                  : "scale-75 opacity-0 -translate-y-8"
+            ? "scale-50 opacity-0"
+            : phase === "logo"
+              ? "scale-100 opacity-100"
+              : phase === "text" || phase === "tagline"
+                ? "scale-90 opacity-100 -translate-y-2"
+                : "scale-75 opacity-0 -translate-y-8"
             }`}
         >
           <div className="relative">
@@ -160,20 +160,20 @@ export function SplashScreen({ onComplete, duration = 3000 }: SplashScreenProps)
         {/* Brand name with staggered letter animation */}
         <div
           className={`mt-8 transition-all duration-700 ease-out ${phase === "text" || phase === "tagline" || phase === "exit"
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-6"
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 translate-y-6"
             } ${phase === "exit" ? "opacity-0" : ""}`}
         >
           <h1 className="text-5xl sm:text-6xl font-bold font-display tracking-tight">
-            <span className="text-gradient-animate inline-block">Pathly</span>
+            <span className="text-gradient-animate inline-block">Pathfy</span>
           </h1>
         </div>
 
         {/* Tagline with typewriter effect */}
         <div
           className={`mt-4 transition-all duration-700 ease-out ${phase === "tagline" || phase === "exit"
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-4"
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 translate-y-4"
             } ${phase === "exit" ? "opacity-0" : ""}`}
         >
           <p className="text-center text-base sm:text-lg text-muted-foreground font-medium tracking-wide">

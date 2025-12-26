@@ -11,9 +11,9 @@ export default function About() {
                         <Zap className="h-4 w-4" />
                         Our Mission
                     </div>
-                    <h1 className="text-4xl md:text-5xl font-bold font-display">About Pathly</h1>
+                    <h1 className="text-4xl md:text-5xl font-bold font-display">About Pathfy</h1>
                     <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                        We build tools for the execution-minded. Pathly is designed to bridge the gap between ambitious goals and realistic achievements through data-driven planning.
+                        We build tools for the execution-minded. Pathfy is designed to bridge the gap between ambitious goals and realistic achievements through data-driven planning.
                     </p>
                 </div>
 
@@ -77,7 +77,7 @@ export default function About() {
 
                 <div className="mt-24 pt-12 border-t border-border text-center">
                     <p className="text-muted-foreground">
-                        © {new Date().getFullYear()} Pathly. All rights reserved.
+                        © {new Date().getFullYear()} Pathfy. All rights reserved.
                     </p>
                     <p className="mt-2 font-medium">
                         Built by Harsh Vishwakarma, with inputs from Abhishek Gaud.

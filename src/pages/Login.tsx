@@ -48,11 +48,11 @@ export default function Login() {
                 <Zap className="w-5 h-5 text-white" />
               </div>
               <span className="text-lg font-semibold text-foreground">
-                Pathly
+                Pathfy
               </span>
             </Link>
-            <Link 
-              to="/signup" 
+            <Link
+              to="/signup"
               className="px-4 py-2 rounded-full border border-border text-sm font-medium hover:bg-secondary/50 transition-colors"
             >
               Sign up
@@ -95,7 +95,7 @@ export default function Login() {
                 className="pl-12 pr-20 h-14 rounded-2xl glass-input text-base"
                 required
               />
-              <button 
+              <button
                 type="button"
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
@@ -104,8 +104,8 @@ export default function Login() {
             </div>
 
             {/* Submit Button */}
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full h-14 rounded-2xl bg-foreground text-background hover:bg-foreground/90 text-base font-medium shadow-lg"
               disabled={isLoading}
             >
