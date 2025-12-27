@@ -14,17 +14,20 @@ import { DataReset } from "@/components/profile/DataReset";
 import { AccountDeletion } from "@/components/profile/AccountDeletion";
 import { ReassessmentReminder } from "@/components/profile/ReassessmentReminder";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
-import { 
-  User, 
-  Award, 
-  TrendingUp, 
-  Calendar, 
-  CheckCircle2, 
+import {
+  User,
+  Award,
+  TrendingUp,
+  Calendar,
+  CheckCircle2,
   Download,
   Settings,
   Activity,
-  Edit
+  Edit,
+  ArrowRight
 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ShareEarnSection } from "@/components/pricing/ShareEarnSection";
 import { toast } from "@/hooks/use-toast";
 
 export default function Profile() {
@@ -107,8 +110,16 @@ export default function Profile() {
                         <h1 className="text-2xl font-bold mb-1">{userProfile.name}</h1>
                         <p className="text-muted-foreground text-sm mb-4">{userProfile.email}</p>
                         <TokenDisplay tokens={userProfile.tokens} size="sm" className="mx-auto" />
+
+                        <Link to="/pricing" className="block mt-4">
+                          <Button variant="hero" size="sm" className="w-full gap-2">
+                            Get More Tokens
+                            <ArrowRight className="w-4 h-4" />
+                          </Button>
+                        </Link>
+
                         <p className="text-xs text-muted-foreground mt-4">Member since {userProfile.joined}</p>
-                        
+
                         {/* Quick info pills */}
                         <div className="flex flex-wrap justify-center gap-2 mt-4">
                           {userProfile.educationLevel && (
@@ -135,212 +146,211 @@ export default function Profile() {
                     {isLoading ? (
                       <Skeleton className="h-20 w-full" />
                     ) : (
-                      <div className="text-center">
-                        <div className="text-5xl font-bold text-primary mb-2">{userProfile.reputation}</div>
-                        <Progress value={(userProfile.reputation / 1000) * 100} className="h-2 mb-2" />
-                        <p className="text-xs text-muted-foreground">Next level: 1000 points</p>
                       </div>
                     )}
-                  </div>
                 </div>
 
-                {/* Main Content - Edit Profile */}
-                <div className="lg:col-span-2 space-y-6">
-                  <div className="p-6 rounded-xl card-gradient border border-border">
-                    <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-xl font-bold flex items-center gap-2">
-                        <Edit className="w-5 h-5 text-primary" />
-                        {isEditing ? "Edit Profile" : "Profile Information"}
-                      </h2>
-                      {!isEditing && (
-                        <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-                          <Edit className="w-4 h-4 mr-2" />
-                          Edit
-                        </Button>
-                      )}
-                    </div>
-
-                    {isEditing ? (
-                      <ProfileEditForm 
-                        onCancel={() => setIsEditing(false)} 
-                        onSave={() => setIsEditing(false)} 
-                      />
-                    ) : (
-                      <div className="grid sm:grid-cols-2 gap-4">
-                        <div className="p-4 rounded-lg bg-secondary/30">
-                          <p className="text-sm text-muted-foreground">Display Name</p>
-                          <p className="font-medium">{userProfile.name}</p>
-                        </div>
-                        <div className="p-4 rounded-lg bg-secondary/30">
-                          <p className="text-sm text-muted-foreground">Education Level</p>
-                          <p className="font-medium">{userProfile.educationLevel || "Not set"}</p>
-                        </div>
-                        <div className="p-4 rounded-lg bg-secondary/30">
-                          <p className="text-sm text-muted-foreground">Stream / Background</p>
-                          <p className="font-medium">{userProfile.stream || "Not set"}</p>
-                        </div>
-                        <div className="p-4 rounded-lg bg-secondary/30">
-                          <p className="text-sm text-muted-foreground">Hours per Week</p>
-                          <p className="font-medium">{userProfile.availableHours ? `${userProfile.availableHours}h` : "Not set"}</p>
-                        </div>
-                        <div className="p-4 rounded-lg bg-secondary/30">
-                          <p className="text-sm text-muted-foreground">Primary Commitment</p>
-                          <p className="font-medium capitalize">{userProfile.commitment || "Not set"}</p>
-                        </div>
-                        <div className="p-4 rounded-lg bg-secondary/30">
-                          <p className="text-sm text-muted-foreground">Preferred Study Time</p>
-                          <p className="font-medium capitalize">{userProfile.studyTime || "Not set"}</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                {/* Refer & Earn Section */}
+                <ShareEarnSection />
               </div>
-            </TabsContent>
 
-            {/* Settings Tab */}
-            <TabsContent value="settings">
-              <div className="grid lg:grid-cols-2 gap-6 max-w-4xl">
-                <GoalManagement />
-                <ReassessmentReminder />
-                <DataReset />
-                <AccountDeletion />
-              </div>
-            </TabsContent>
-
-            {/* Activity Tab */}
-            <TabsContent value="activity">
-              <div className="grid lg:grid-cols-3 gap-8">
-                {/* Stats Sidebar */}
-                <div className="space-y-6">
-                  <div className="p-6 rounded-xl card-gradient border border-border">
-                    <h2 className="font-semibold mb-4">Lifetime Stats</h2>
-                    {isLoading ? (
-                      <div className="space-y-4">
-                        <Skeleton className="h-6 w-full" />
-                        <Skeleton className="h-6 w-full" />
-                        <Skeleton className="h-6 w-full" />
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Goals Completed</span>
-                          <span className="font-bold">{userProfile.totalTasksCompleted}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Hours Logged</span>
-                          <span className="font-bold">{userProfile.totalHours}h</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Current Streak</span>
-                          <span className="font-bold flex items-center gap-1">
-                            <TrendingUp className="w-4 h-4 text-success" />
-                            {userProfile.currentStreak} days
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Longest Streak</span>
-                          <span className="font-bold">{userProfile.longestStreak} days</span>
-                        </div>
-                      </div>
+              {/* Main Content - Edit Profile */}
+              <div className="lg:col-span-2 space-y-6">
+                <div className="p-6 rounded-xl card-gradient border border-border">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-bold flex items-center gap-2">
+                      <Edit className="w-5 h-5 text-primary" />
+                      {isEditing ? "Edit Profile" : "Profile Information"}
+                    </h2>
+                    {!isEditing && (
+                      <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit
+                      </Button>
                     )}
                   </div>
-                </div>
 
-                {/* Main Content */}
-                <div className="lg:col-span-2 space-y-6">
-                  {/* Getting Started */}
-                  {!isLoading && userProfile.totalTasksCompleted === 0 && (
-                    <div className="p-6 rounded-xl card-gradient border border-border">
-                      <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                        <Award className="w-5 h-5 text-primary" />
-                        Get Started
-                      </h2>
-                      <p className="text-muted-foreground mb-6">
-                        Complete your first goal to unlock skill proofs and milestones!
-                      </p>
-                      <div className="flex gap-4">
-                        <Button variant="hero" asChild>
-                          <a href="/reality-check">Start Reality Check</a>
-                        </Button>
+                  {isEditing ? (
+                    <ProfileEditForm
+                      onCancel={() => setIsEditing(false)}
+                      onSave={() => setIsEditing(false)}
+                    />
+                  ) : (
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div className="p-4 rounded-lg bg-secondary/30">
+                        <p className="text-sm text-muted-foreground">Display Name</p>
+                        <p className="font-medium">{userProfile.name}</p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-secondary/30">
+                        <p className="text-sm text-muted-foreground">Education Level</p>
+                        <p className="font-medium">{userProfile.educationLevel || "Not set"}</p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-secondary/30">
+                        <p className="text-sm text-muted-foreground">Stream / Background</p>
+                        <p className="font-medium">{userProfile.stream || "Not set"}</p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-secondary/30">
+                        <p className="text-sm text-muted-foreground">Hours per Week</p>
+                        <p className="font-medium">{userProfile.availableHours ? `${userProfile.availableHours}h` : "Not set"}</p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-secondary/30">
+                        <p className="text-sm text-muted-foreground">Primary Commitment</p>
+                        <p className="font-medium capitalize">{userProfile.commitment || "Not set"}</p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-secondary/30">
+                        <p className="text-sm text-muted-foreground">Preferred Study Time</p>
+                        <p className="font-medium capitalize">{userProfile.studyTime || "Not set"}</p>
                       </div>
                     </div>
                   )}
+                </div>
+              </div>
+            </div>
+          </TabsContent>
 
-                  {/* Milestones */}
-                  <div className="p-6 rounded-xl card-gradient border border-border">
-                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                      <CheckCircle2 className="w-5 h-5 text-success" />
-                      Completed Milestones
-                    </h2>
-                    {isLoading ? (
-                      <div className="space-y-3">
-                        <Skeleton className="h-16 w-full" />
-                        <Skeleton className="h-16 w-full" />
-                      </div>
-                    ) : userProfile.totalTasksCompleted > 0 ? (
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between p-4 rounded-lg bg-success/5 border border-success/20">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-success/20 flex items-center justify-center">
-                              <CheckCircle2 className="w-4 h-4 text-success" />
-                            </div>
-                            <span className="font-medium">First Goal Completed</span>
-                          </div>
-                          <span className="text-sm text-muted-foreground flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            Achieved
-                          </span>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-muted-foreground text-center py-8">
-                        No milestones yet. Complete goals to earn milestones!
-                      </p>
-                    )}
-                  </div>
+          {/* Settings Tab */}
+          <TabsContent value="settings">
+            <div className="grid lg:grid-cols-2 gap-6 max-w-4xl">
+              <GoalManagement />
+              <ReassessmentReminder />
+              <DataReset />
+              <AccountDeletion />
+            </div>
+          </TabsContent>
 
-                  {/* Skill Proofs */}
+          {/* Activity Tab */}
+          <TabsContent value="activity">
+            <div className="grid lg:grid-cols-3 gap-8">
+              {/* Stats Sidebar */}
+              <div className="space-y-6">
+                <div className="p-6 rounded-xl card-gradient border border-border">
+                  <h2 className="font-semibold mb-4">Lifetime Stats</h2>
+                  {isLoading ? (
+                    <div className="space-y-4">
+                      <Skeleton className="h-6 w-full" />
+                      <Skeleton className="h-6 w-full" />
+                      <Skeleton className="h-6 w-full" />
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Goals Completed</span>
+                        <span className="font-bold">{userProfile.totalTasksCompleted}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Hours Logged</span>
+                        <span className="font-bold">{userProfile.totalHours}h</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Current Streak</span>
+                        <span className="font-bold flex items-center gap-1">
+                          <TrendingUp className="w-4 h-4 text-success" />
+                          {userProfile.currentStreak} days
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Longest Streak</span>
+                        <span className="font-bold">{userProfile.longestStreak} days</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Main Content */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Getting Started */}
+                {!isLoading && userProfile.totalTasksCompleted === 0 && (
                   <div className="p-6 rounded-xl card-gradient border border-border">
                     <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                       <Award className="w-5 h-5 text-primary" />
-                      Skill Proofs
+                      Get Started
                     </h2>
-                    <p className="text-sm text-muted-foreground mb-6">
-                      Complete goals to generate skill proofs for your resume and LinkedIn.
+                    <p className="text-muted-foreground mb-6">
+                      Complete your first goal to unlock skill proofs and milestones!
                     </p>
-
-                    {userProfile.totalTasksCompleted > 0 ? (
-                      <div className="space-y-6">
-                        <div className="p-4 rounded-lg bg-secondary/50 border border-border">
-                          <div className="flex items-center justify-between mb-3">
-                            <div>
-                              <h3 className="font-semibold">Goal Achievement</h3>
-                              <span className="text-xs text-primary font-medium">Beginner+</span>
-                            </div>
-                          </div>
-                          <p className="text-sm text-muted-foreground mb-4">
-                            Demonstrated commitment by completing {userProfile.totalTasksCompleted} goal(s).
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-muted-foreground text-center py-8">
-                        No skill proofs yet. Complete tasks to generate proofs!
-                      </p>
-                    )}
-
-                    <Button variant="outline" className="w-full mt-6" disabled={userProfile.totalTasksCompleted === 0}>
-                      <Download className="w-4 h-4 mr-2" />
-                      Export All Proofs as PDF
-                    </Button>
+                    <div className="flex gap-4">
+                      <Button variant="hero" asChild>
+                        <a href="/reality-check">Start Reality Check</a>
+                      </Button>
+                    </div>
                   </div>
+                )}
+
+                {/* Milestones */}
+                <div className="p-6 rounded-xl card-gradient border border-border">
+                  <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-success" />
+                    Completed Milestones
+                  </h2>
+                  {isLoading ? (
+                    <div className="space-y-3">
+                      <Skeleton className="h-16 w-full" />
+                      <Skeleton className="h-16 w-full" />
+                    </div>
+                  ) : userProfile.totalTasksCompleted > 0 ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between p-4 rounded-lg bg-success/5 border border-success/20">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-success/20 flex items-center justify-center">
+                            <CheckCircle2 className="w-4 h-4 text-success" />
+                          </div>
+                          <span className="font-medium">First Goal Completed</span>
+                        </div>
+                        <span className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Calendar className="w-4 h-4" />
+                          Achieved
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-center py-8">
+                      No milestones yet. Complete goals to earn milestones!
+                    </p>
+                  )}
+                </div>
+
+                {/* Skill Proofs */}
+                <div className="p-6 rounded-xl card-gradient border border-border">
+                  <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                    <Award className="w-5 h-5 text-primary" />
+                    Skill Proofs
+                  </h2>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Complete goals to generate skill proofs for your resume and LinkedIn.
+                  </p>
+
+                  {userProfile.totalTasksCompleted > 0 ? (
+                    <div className="space-y-6">
+                      <div className="p-4 rounded-lg bg-secondary/50 border border-border">
+                        <div className="flex items-center justify-between mb-3">
+                          <div>
+                            <h3 className="font-semibold">Goal Achievement</h3>
+                            <span className="text-xs text-primary font-medium">Beginner+</span>
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Demonstrated commitment by completing {userProfile.totalTasksCompleted} goal(s).
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-center py-8">
+                      No skill proofs yet. Complete tasks to generate proofs!
+                    </p>
+                  )}
+
+                  <Button variant="outline" className="w-full mt-6" disabled={userProfile.totalTasksCompleted === 0}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Export All Proofs as PDF
+                  </Button>
                 </div>
               </div>
-            </TabsContent>
-          </Tabs>
-        </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
-    </Layout>
+    </div>
+    </Layout >
   );
 }
