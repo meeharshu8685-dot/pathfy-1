@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +16,11 @@ interface FeatureCardProps {
 export function FeatureCard({ icon, title, description, href, tokenCost, className }: FeatureCardProps) {
   return (
     <Link to={href} className={cn("group block", className)}>
-      <div className="h-full p-6 rounded-xl card-gradient border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10">
+      <motion.div
+        whileHover={{ y: -5, scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className="h-full p-6 rounded-xl card-gradient border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10"
+      >
         <div className="flex items-start justify-between mb-4">
           <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
             {icon}
@@ -34,7 +39,7 @@ export function FeatureCard({ icon, title, description, href, tokenCost, classNa
           Get Started
           <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
         </div>
-      </div>
+      </motion.div>
     </Link>
   );
 }

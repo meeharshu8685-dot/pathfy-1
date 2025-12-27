@@ -15,7 +15,7 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-xl",
         ghost: "hover:bg-secondary/60 hover:text-foreground rounded-xl",
         link: "text-primary underline-offset-4 hover:underline",
-        
+
         // Premium SaaS buttons
         hero: [
           "relative overflow-hidden rounded-2xl px-8 py-3",
@@ -29,7 +29,7 @@ const buttonVariants = cva(
           "before:translate-x-[-200%] hover:before:translate-x-[200%]",
           "before:transition-transform before:duration-700",
         ].join(" "),
-        
+
         gradient: [
           "relative overflow-hidden rounded-xl",
           "bg-gradient-to-r from-primary to-accent",
@@ -37,7 +37,7 @@ const buttonVariants = cva(
           "shadow-md hover:shadow-lg",
           "hover:scale-[1.02]",
         ].join(" "),
-        
+
         glow: [
           "relative rounded-xl",
           "bg-primary text-primary-foreground",
@@ -45,7 +45,7 @@ const buttonVariants = cva(
           "hover:shadow-[0_0_40px_hsl(var(--primary)/0.6)]",
           "hover:bg-primary/90",
         ].join(" "),
-        
+
         glass: [
           "rounded-xl",
           "bg-background/60 backdrop-blur-xl",
@@ -54,17 +54,17 @@ const buttonVariants = cva(
           "hover:bg-background/80 hover:border-border",
           "shadow-sm hover:shadow-md",
         ].join(" "),
-        
+
         soft: [
           "rounded-xl",
           "bg-primary/10 text-primary",
           "hover:bg-primary/20",
           "border border-primary/20",
         ].join(" "),
-        
+
         success: "bg-success text-success-foreground hover:bg-success/90 shadow-sm hover:shadow-md rounded-xl",
         warning: "bg-warning text-warning-foreground hover:bg-warning/90 shadow-sm hover:shadow-md rounded-xl",
-        
+
         premium: [
           "relative overflow-hidden rounded-2xl",
           "bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500",
@@ -73,14 +73,14 @@ const buttonVariants = cva(
           "hover:shadow-[0_8px_30px_hsl(38_92%_50%/0.5)]",
           "hover:scale-[1.02]",
         ].join(" "),
-        
+
         dark: [
           "rounded-xl",
           "bg-foreground text-background",
           "hover:bg-foreground/90",
           "shadow-lg hover:shadow-xl",
         ].join(" "),
-        
+
         minimal: [
           "rounded-lg",
           "text-foreground",
@@ -107,7 +107,7 @@ const buttonVariants = cva(
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  VariantProps<typeof buttonVariants> {
   asChild?: boolean;
 }
 

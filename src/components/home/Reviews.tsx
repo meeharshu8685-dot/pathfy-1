@@ -1,4 +1,25 @@
 import { Star, Quote, User } from "lucide-react";
+import { motion } from "framer-motion";
+
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.1,
+        },
+    },
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, scale: 0.95, y: 20 },
+    visible: {
+        opacity: 1,
+        scale: 1,
+        y: 0,
+        transition: { duration: 0.5 }
+    },
+};
 
 interface Review {
     name: string;
@@ -80,10 +101,18 @@ export function Reviews() {
                     </p>
                 </div>
 
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <motion.div
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, margin: "-100px" }}
+                    variants={containerVariants}
+                    className="grid md:grid-cols-2 lg:grid-cols-4 gap-6"
+                >
                     {reviews.map((t, i) => (
-                        <div
+                        <motion.div
                             key={i}
+                            variants={itemVariants}
+                            whileHover={{ y: -5 }}
                             className="p-6 rounded-2xl card-gradient border border-border flex flex-col justify-between hover:border-primary/30 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 group"
                         >
                             <div>
@@ -105,9 +134,9 @@ export function Reviews() {
                                 <h4 className="font-bold text-foreground text-sm">{t.name}</h4>
                                 <p className="text-xs text-muted-foreground">{t.role}</p>
                             </div>
-                        </div>
+                        </motion.div>
                     ))}
-                </div>
+                </motion.div>
             </div>
         </section>
     );
