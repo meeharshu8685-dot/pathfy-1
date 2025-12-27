@@ -55,7 +55,7 @@ const faqs = [
           rel="noopener noreferrer"
           className="text-primary hover:underline font-medium"
         >
-          @pathly.g
+          @pathfy.g
         </a>
       </span>
     ),
