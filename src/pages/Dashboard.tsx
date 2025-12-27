@@ -45,7 +45,7 @@ export default function Dashboard() {
 
   const userStats = {
     tokens: profile?.tokens ?? 0,
-    maxTokens: profile?.max_tokens ?? 50,
+    maxTokens: profile?.max_tokens ? Math.max(profile.max_tokens, profile.tokens ?? 0) : Math.max(profile?.tokens ?? 0, 50),
     streak: profile?.current_streak ?? 0,
     tasksCompleted: profile?.completed_goals ?? 0,
     hoursLogged: profile?.total_hours_logged ?? 0,

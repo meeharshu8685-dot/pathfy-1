@@ -199,6 +199,7 @@ export type Database = {
           reassessment_reminder_enabled: boolean | null
           stream: string | null
           tokens: number
+          max_tokens: number
           total_goals: number
           total_hours_logged: number
           updated_at: string
@@ -224,6 +225,7 @@ export type Database = {
           reassessment_reminder_enabled?: boolean | null
           stream?: string | null
           tokens?: number
+          max_tokens?: number
           total_goals?: number
           total_hours_logged?: number
           updated_at?: string
@@ -249,6 +251,7 @@ export type Database = {
           reassessment_reminder_enabled?: boolean | null
           stream?: string | null
           tokens?: number
+          max_tokens?: number
           total_goals?: number
           total_hours_logged?: number
           updated_at?: string
