@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 
-const SHARE_URL = "https://pathly-executor.vercel.app/";
+const SHARE_URL = "https://www.pathfy.online/";
 const SHARE_TEXT = "Build a realistic roadmap for your goals with Pathfy. 🚀";
 
 export function ShareEarnSection() {
