@@ -28,7 +28,8 @@ export default function Signup() {
       return;
     }
 
-    const { error } = await signUp(email, password, fullName);
+    const referredBy = localStorage.getItem("referred_by") || undefined;
+    const { error } = await signUp(email, password, fullName, referredBy);
 
     if (error) {
       toast({
@@ -38,6 +39,10 @@ export default function Signup() {
       });
       setIsLoading(false);
       return;
+    }
+
+    if (referredBy) {
+      localStorage.removeItem("referred_by");
     }
 
     toast({

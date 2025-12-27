@@ -25,47 +25,57 @@ import HowToUse from "./pages/HowToUse";
 import ReviewsPage from "./pages/ReviewsPage";
 import ReviewPage from "./pages/ReviewPage";
 import PaymentHistory from "./pages/PaymentHistory";
+import { useEffect } from "react";
 
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/reality-check" element={<RealityCheck />} />
-            <Route path="/approach-planner" element={<GoalApproachPlanner />} />
-            {/* Redirect old decomposer URL to approach planner */}
-            <Route path="/problem-decomposer" element={<Navigate to="/approach-planner" replace />} />
-            <Route path="/roadmap" element={<Roadmap />} />
-            <Route path="/roadmap-history" element={<RoadmapHistory />} />
-            <Route path="/study-optimizer" element={<StudyOptimizer />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/disclaimer" element={<Disclaimer />} />
-            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/terms-of-service" element={<TermsOfService />} />
-            <Route path="/help" element={<Help />} />
-            <Route path="/reviews" element={<ReviewsPage />} />
-            <Route path="/review" element={<ReviewPage />} />
-            <Route path="/payment-history" element={<PaymentHistory />} />
-            <Route path="/how-to-use" element={<HowToUse />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+const App = () => {
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
+    if (ref) {
+      localStorage.setItem("referred_by", ref);
+    }
+  }, []);
 
-);
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/reality-check" element={<RealityCheck />} />
+              <Route path="/approach-planner" element={<GoalApproachPlanner />} />
+              {/* Redirect old decomposer URL to approach planner */}
+              <Route path="/problem-decomposer" element={<Navigate to="/approach-planner" replace />} />
+              <Route path="/roadmap" element={<Roadmap />} />
+              <Route path="/roadmap-history" element={<RoadmapHistory />} />
+              <Route path="/study-optimizer" element={<StudyOptimizer />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/disclaimer" element={<Disclaimer />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/terms-of-service" element={<TermsOfService />} />
+              <Route path="/help" element={<Help />} />
+              <Route path="/reviews" element={<ReviewsPage />} />
+              <Route path="/review" element={<ReviewPage />} />
+              <Route path="/payment-history" element={<PaymentHistory />} />
+              <Route path="/how-to-use" element={<HowToUse />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

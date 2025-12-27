@@ -46,16 +46,16 @@ export function ShareEarnSection() {
 
         switch (platform) {
             case "whatsapp":
-                url = `https://wa.me/?text=${encodeURIComponent(SHARE_TEXT + " " + SHARE_URL)}`;
+                url = `https://wa.me/?text=${encodeURIComponent(SHARE_TEXT + " " + referralUrl)}`;
                 break;
             case "twitter":
-                url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(SHARE_TEXT)}&url=${encodeURIComponent(SHARE_URL)}`;
+                url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(SHARE_TEXT)}&url=${encodeURIComponent(referralUrl)}`;
                 break;
             case "linkedin":
-                url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(SHARE_URL)}`;
+                url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(referralUrl)}`;
                 break;
             case "copy":
-                navigator.clipboard.writeText(`${SHARE_TEXT} ${SHARE_URL}`);
+                navigator.clipboard.writeText(`${SHARE_TEXT} ${referralUrl}`);
                 setCopied(true);
                 setTimeout(() => setCopied(false), 2000);
                 break;
@@ -65,7 +65,7 @@ export function ShareEarnSection() {
                         await navigator.share({
                             title: "Pathfy",
                             text: SHARE_TEXT,
-                            url: SHARE_URL,
+                            url: referralUrl,
                         });
                     } catch (err) {
                         console.log("Share canceled or failed", err);
@@ -80,35 +80,17 @@ export function ShareEarnSection() {
             window.open(url, "_blank");
         }
 
-        try {
-            const { data, error } = await supabase.functions.invoke("track-share", {
-                body: { platform },
-            });
-
-            if (error) throw error;
-
-            if (data.success || data.message) {
-                toast({
-                    title: "Tokens Earned! 🪙",
-                    description: data.message,
-                });
-                setShareCount(data.share_count);
-                queryClient.invalidateQueries({ queryKey: ["profile"] });
-            }
-        } catch (error: any) {
-            console.error("Share tracking error", error);
-            toast({
-                title: "Heads up!",
-                description: "Share recorded, but token update failed. Contact support if needed.",
-                variant: "default",
-            });
-        } finally {
-            setIsSharing(false);
+        if (platform !== "copy" && platform !== "native") {
+            window.open(url, "_blank");
         }
+
+        setIsSharing(false);
     };
 
     const nextMilestone = 5 - (shareCount % 5);
     const progress = ((shareCount % 5) / 5) * 100;
+
+    const referralUrl = user ? `${SHARE_URL}?ref=${user.id}` : SHARE_URL;
 
     return (
         <div className="mt-8 p-6 rounded-2xl border border-primary/20 bg-primary/5 relative overflow-hidden">
@@ -122,12 +104,11 @@ export function ShareEarnSection() {
                     <h3 className="text-xl font-bold">Refer & Earn Tokens</h3>
                 </div>
                 <p className="text-muted-foreground text-sm mb-6 max-w-md">
-                    Help others execute their goals. Earn <span className="text-primary font-bold">2 tokens</span> per share +
-                    <span className="text-primary font-bold"> 10 bonus tokens</span> every 5 shares!
+                    Invite others to join Pathfy. Earn <span className="text-primary font-bold">5 tokens</span> for every friend who signs up!
                 </p>
 
                 {/* Bonus Progress */}
-                <div className="mb-8 space-y-2">
+                {/* <div className="mb-8 space-y-2">
                     <div className="flex justify-between text-xs font-medium mb-1">
                         <span className="text-primary flex items-center gap-1">
                             <Zap className="w-3 h-3" /> {shareCount % 5} / 5 Shares
@@ -140,7 +121,7 @@ export function ShareEarnSection() {
                             style={{ width: `${progress}%` }}
                         />
                     </div>
-                </div>
+                </div> */}
 
                 {/* Share Actions */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
