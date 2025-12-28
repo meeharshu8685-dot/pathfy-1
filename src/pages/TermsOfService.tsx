@@ -23,7 +23,7 @@ const TermsOfService = () => {
               <section className="space-y-4">
                 <h2 className="text-lg font-semibold text-foreground">1. Purpose of the Platform</h2>
                 <p>
-                  This platform provides general guidance, structured insights, and planning tools 
+                  This platform provides general guidance, structured insights, and planning tools
                   to help users make informed learning and career-related decisions.
                 </p>
                 <p className="font-medium text-foreground">
@@ -71,7 +71,7 @@ const TermsOfService = () => {
               <section className="space-y-4">
                 <h2 className="text-lg font-semibold text-foreground">5. Content Ownership</h2>
                 <p>
-                  All content, structure, and materials on this platform are the intellectual 
+                  All content, structure, and materials on this platform are the intellectual
                   property of the platform unless otherwise stated.
                 </p>
                 <p className="font-medium text-foreground">
@@ -83,7 +83,7 @@ const TermsOfService = () => {
               <section className="space-y-4">
                 <h2 className="text-lg font-semibold text-foreground">6. Platform Availability</h2>
                 <p>
-                  We aim to keep the platform available and accurate, but we do not guarantee 
+                  We aim to keep the platform available and accurate, but we do not guarantee
                   uninterrupted access or error-free operation.
                 </p>
                 <p>
@@ -103,7 +103,7 @@ const TermsOfService = () => {
               <section className="space-y-4">
                 <h2 className="text-lg font-semibold text-foreground">8. Updates to Terms</h2>
                 <p>
-                  These terms may be updated from time to time. Continued use of the platform 
+                  These terms may be updated from time to time. Continued use of the platform
                   implies acceptance of the updated terms.
                 </p>
               </section>
@@ -112,10 +112,7 @@ const TermsOfService = () => {
               <section className="space-y-4">
                 <h2 className="text-lg font-semibold text-foreground">9. Contact</h2>
                 <p>
-                  For questions regarding these terms, contact us at:{" "}
-                  <a href="mailto:meeharshu8685@gmail.com" className="text-primary hover:underline">
-                    meeharshu8685@gmail.com
-                  </a>
+                  For questions regarding these terms, please contact us through the platform's support channels.
                 </p>
               </section>
             </div>

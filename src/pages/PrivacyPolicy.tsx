@@ -83,11 +83,8 @@ const PrivacyPolicy = () => {
                   <li>Update or reset your goals</li>
                   <li>Request deletion of your account and data</li>
                 </ul>
-                <p className="mt-2">
-                  To request data deletion, contact us at:{" "}
-                  <a href="mailto:Pathfy8685@Gmail.com" className="text-primary hover:underline">
-                    Pathfy8685@Gmail.com
-                  </a>
+                <p className="mt-2 text-sm italic">
+                  To request data deletion or exercise your rights, please use the account settings available on the platform.
                 </p>
               </section>
 
@@ -95,7 +92,7 @@ const PrivacyPolicy = () => {
               <section className="space-y-4">
                 <h2 className="text-lg font-semibold text-foreground">6. Changes to This Policy</h2>
                 <p>
-                  We may update this policy occasionally. Any major changes will be communicated 
+                  We may update this policy occasionally. Any major changes will be communicated
                   clearly on the platform.
                 </p>
               </section>
@@ -104,10 +101,7 @@ const PrivacyPolicy = () => {
               <section className="space-y-4">
                 <h2 className="text-lg font-semibold text-foreground">7. Contact</h2>
                 <p>
-                  If you have questions or concerns about privacy, contact us at:{" "}
-                  <a href="mailto:meeharshu8685@gmail.com" className="text-primary hover:underline">
-                    meeharshu8685@gmail.com
-                  </a>
+                  If you have questions or concerns about privacy, please contact us through our official support channels.
                 </p>
               </section>
             </div>

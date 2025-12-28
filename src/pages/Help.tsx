@@ -50,12 +50,12 @@ const faqs = [
       <span>
         Follow us on Instagram for tips, updates, and more: {" "}
         <a
-          href="https://www.instagram.com/pathly.g?igsh=MThoN2Z5OHF0cHVzcQ=="
+          href="https://www.instagram.com/pathfy.online"
           target="_blank"
           rel="noopener noreferrer"
           className="text-primary hover:underline font-medium"
         >
-          @pathfy.g
+          pathfy.online
         </a>
       </span>
     ),
@@ -101,29 +101,7 @@ const Help = () => {
             </Accordion>
           </div>
 
-          {/* Feedback Section */}
-          <div className="glass-card p-6 md:p-8 border-l-4 border-primary/50">
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0">
-                <MessageCircle className="w-6 h-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-xl font-semibold text-foreground mb-2">
-                  Something feels off?
-                </h2>
-                <p className="text-muted-foreground mb-4">
-                  If something doesn't feel right — a suggestion that's
-                  confusing, a timeline that doesn't fit, or anything else —
-                  tell us. We're building this for students, and your input
-                  matters.
-                </p>
-                <Button onClick={handleFeedback} className="gap-2">
-                  <Mail className="w-4 h-4" />
-                  Share Feedback
-                </Button>
-              </div>
-            </div>
-          </div>
+
         </div>
       </div>
     </Layout>
