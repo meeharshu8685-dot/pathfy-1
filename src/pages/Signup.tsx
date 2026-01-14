@@ -57,7 +57,7 @@ export default function Signup() {
     <div className="min-h-screen auth-bg flex items-center justify-center p-4">
       <div className="w-full max-w-md animate-scale-in">
         {/* Glass Card */}
-        <div className="glass-card-strong rounded-3xl p-8 md:p-10">
+        <div className="glass-card-strong rounded-3xl p-6 md:p-10">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <Link to="/" className="flex items-center gap-2 group">
@@ -78,7 +78,7 @@ export default function Signup() {
 
           {/* Title */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-1">Sign up</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">Sign up</h1>
             <p className="text-muted-foreground text-sm">Start executing your goals today</p>
           </div>
 

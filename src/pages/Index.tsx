@@ -140,7 +140,7 @@ export default function Index() {
               {/* Main heading */}
               <motion.h1
                 variants={itemVariants}
-                className="text-4xl sm:text-5xl md:text-7xl font-extrabold mb-6 leading-tight"
+                className="text-3xl sm:text-5xl md:text-7xl font-extrabold mb-6 leading-tight"
               >
                 <span className="block">Stop Planning.</span>
                 <span className="block mt-2 text-gradient-animate">Start Executing.</span>
@@ -194,7 +194,7 @@ export default function Index() {
         </section>
 
         {/* Anti-Patterns Section */}
-        <section className="py-20 border-t border-border overflow-hidden">
+        <section className="py-12 md:py-20 border-t border-border overflow-hidden">
           <div className="container mx-auto px-4">
             <motion.div
               initial="hidden"
@@ -277,7 +277,7 @@ export default function Index() {
         </section>
 
         {/* Features Section */}
-        <section className="py-20 border-t border-border">
+        <section className="py-12 md:py-20 border-t border-border">
           <div className="container mx-auto px-4">
             <motion.div
               initial="hidden"
@@ -313,7 +313,7 @@ export default function Index() {
         </section>
 
         {/* CTA Section */}
-        <section className="py-20 border-t border-border">
+        <section className="py-12 md:py-20 border-t border-border">
           <div className="container mx-auto px-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
