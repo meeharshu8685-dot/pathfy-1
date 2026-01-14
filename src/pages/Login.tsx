@@ -74,7 +74,7 @@ export default function Login() {
               </div>
               <Input
                 type="email"
-                placeholder="e-mail address"
+                placeholder="Email Address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="pl-12 h-14 rounded-2xl glass-input text-base"
@@ -89,7 +89,7 @@ export default function Login() {
               </div>
               <Input
                 type="password"
-                placeholder="password"
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="pl-12 pr-20 h-14 rounded-2xl glass-input text-base"

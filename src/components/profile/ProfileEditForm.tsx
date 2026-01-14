@@ -104,7 +104,7 @@ export function ProfileEditForm({ onCancel, onSave }: ProfileEditFormProps) {
           id="stream"
           value={stream}
           onChange={(e) => setStream(e.target.value)}
-          placeholder="e.g., Science, Commerce, Engineering"
+          placeholder="E.g., Science, Commerce, Engineering"
         />
       </div>
 

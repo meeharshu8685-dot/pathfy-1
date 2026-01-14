@@ -102,7 +102,7 @@ export default function Signup() {
               </div>
               <Input
                 type="text"
-                placeholder="full name"
+                placeholder="Full Name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 className="pl-12 h-14 rounded-2xl glass-input text-base"
@@ -117,7 +117,7 @@ export default function Signup() {
               </div>
               <Input
                 type="tel"
-                placeholder="mobile number"
+                placeholder="Mobile Number"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 className="pl-12 h-14 rounded-2xl glass-input text-base"
@@ -132,7 +132,7 @@ export default function Signup() {
               </div>
               <Input
                 type="email"
-                placeholder="e-mail address"
+                placeholder="Email Address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="pl-12 h-14 rounded-2xl glass-input text-base"
@@ -147,7 +147,7 @@ export default function Signup() {
               </div>
               <Input
                 type="password"
-                placeholder="password (min 6 characters)"
+                placeholder="Password (min 6 characters)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="pl-12 h-14 rounded-2xl glass-input text-base"

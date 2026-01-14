@@ -48,19 +48,19 @@ const features = [
 ];
 
 const antiPatterns = [
-  "Give generic advice",
-  "Suggest parallel learning",
-  "Assume unlimited time",
-  "Hallucinate timelines",
-  "Enable fake productivity",
+  "Give Generic Advice",
+  "Suggest Parallel Learning",
+  "Assume Unlimited Time",
+  "Hallucinate Timelines",
+  "Enable Fake Productivity",
 ];
 
 const proPatterns = [
-  "Be conservative, not optimistic",
-  "Reject unrealistic goals",
-  "Enforce correct learning order",
-  "Optimize for execution",
-  "Produce structured outputs",
+  "Be Conservative, Not Optimistic",
+  "Reject Unrealistic Goals",
+  "Enforce Correct Learning Order",
+  "Optimize For Execution",
+  "Produce Structured Outputs",
 ];
 
 const containerVariants = {
