@@ -20,6 +20,7 @@ const navLinks = [
   { href: "/roadmap", label: "Roadmap" },
   { href: "/roadmap-history", label: "History" },
   { href: "/study-optimizer", label: "Optimizer" },
+  { href: "/how-to-use", label: "How to Use" },
 ];
 
 export function Navbar() {
