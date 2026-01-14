@@ -21,8 +21,9 @@ interface ProfileEditFormProps {
 
 export function ProfileEditForm({ onCancel, onSave }: ProfileEditFormProps) {
   const { profile, updateProfile } = useProfile();
-  
+
   const [displayName, setDisplayName] = useState(profile?.display_name || profile?.full_name || "");
+  const [phone, setPhone] = useState(profile?.phone || "");
   const [educationLevel, setEducationLevel] = useState(profile?.education_level || "");
   const [stream, setStream] = useState(profile?.stream || "");
   const [availableHours, setAvailableHours] = useState(profile?.available_hours_per_week || 10);
@@ -35,6 +36,7 @@ export function ProfileEditForm({ onCancel, onSave }: ProfileEditFormProps) {
     try {
       await updateProfile.mutateAsync({
         display_name: displayName,
+        phone,
         education_level: educationLevel,
         stream,
         available_hours_per_week: availableHours,
@@ -66,6 +68,17 @@ export function ProfileEditForm({ onCancel, onSave }: ProfileEditFormProps) {
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           placeholder="How should we call you?"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="phone">Mobile Number</Label>
+        <Input
+          id="phone"
+          type="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="Your mobile number"
         />
       </div>
 

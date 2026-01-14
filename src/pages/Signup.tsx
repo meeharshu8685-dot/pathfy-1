@@ -3,11 +3,12 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Zap, ArrowRight, Loader2, Mail, Lock, User } from "lucide-react";
+import { Zap, ArrowRight, Loader2, Mail, Lock, User, Phone } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 export default function Signup() {
   const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -29,7 +30,7 @@ export default function Signup() {
     }
 
     const referredBy = localStorage.getItem("referred_by") || undefined;
-    const { error } = await signUp(email, password, fullName, referredBy);
+    const { error } = await signUp(email, password, fullName, phone, referredBy);
 
     if (error) {
       toast({
@@ -104,6 +105,21 @@ export default function Signup() {
                 placeholder="full name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
+                className="pl-12 h-14 rounded-2xl glass-input text-base"
+                required
+              />
+            </div>
+
+            {/* Mobile Number Input */}
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
+                <Phone className="w-5 h-5" />
+              </div>
+              <Input
+                type="tel"
+                placeholder="mobile number"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 className="pl-12 h-14 rounded-2xl glass-input text-base"
                 required
               />

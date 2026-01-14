@@ -68,6 +68,7 @@ export default function Profile() {
     availableHours: profile?.available_hours_per_week,
     commitment: profile?.primary_commitment,
     studyTime: profile?.preferred_study_time,
+    phone: profile?.phone,
   };
 
   return (
@@ -184,6 +185,10 @@ export default function Profile() {
                         <div className="p-4 rounded-lg bg-secondary/30">
                           <p className="text-sm text-muted-foreground">Display Name</p>
                           <p className="font-medium">{userProfile.name}</p>
+                        </div>
+                        <div className="p-4 rounded-lg bg-secondary/30">
+                          <p className="text-sm text-muted-foreground">Mobile Number</p>
+                          <p className="font-medium">{userProfile.phone || "Not set"}</p>
                         </div>
                         <div className="p-4 rounded-lg bg-secondary/30">
                           <p className="text-sm text-muted-foreground">Education Level</p>

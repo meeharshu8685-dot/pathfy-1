@@ -193,6 +193,7 @@ export type Database = {
           id: string
           last_reassessment_date: string | null
           longest_streak: number
+          phone: string | null
           preferred_study_time: string | null
           primary_commitment: string | null
           reassessment_reminder_days: number | null
@@ -219,6 +220,7 @@ export type Database = {
           id?: string
           last_reassessment_date?: string | null
           longest_streak?: number
+          phone?: string | null
           preferred_study_time?: string | null
           primary_commitment?: string | null
           reassessment_reminder_days?: number | null
@@ -245,6 +247,7 @@ export type Database = {
           id?: string
           last_reassessment_date?: string | null
           longest_streak?: number
+          phone?: string | null
           preferred_study_time?: string | null
           primary_commitment?: string | null
           reassessment_reminder_days?: number | null
