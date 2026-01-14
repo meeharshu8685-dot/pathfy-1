@@ -37,7 +37,7 @@ export default function About() {
                             </div>
                             <h3 className="text-xl font-bold">The Team</h3>
                             <p className="text-muted-foreground">
-                                Built by <strong>Harsh Vishwakarma</strong>, with insights and strategic inputs from <strong>Abhishek Gaud</strong>.
+                                Built by <strong>Harsh Gaur</strong>, with insights and strategic inputs from <strong>Abhishek Gaud</strong>.
                             </p>
                         </CardContent>
                     </Card>
@@ -80,7 +80,7 @@ export default function About() {
                         © {new Date().getFullYear()} Pathfy. All rights reserved.
                     </p>
                     <p className="mt-2 font-medium">
-                        Built by Harsh Vishwakarma, with inputs from Abhishek Gaud.
+                        Built by Harsh Gaur, with inputs from Abhishek Gaud.
                     </p>
                 </div>
             </div>
